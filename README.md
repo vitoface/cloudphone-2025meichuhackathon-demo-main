@@ -1,71 +1,36 @@
-# Feature Phone Demo
-
-A demo website optimized for feature phones with ultra-low resolution displays, built with Next.js and designed for QVGA (240×320) and QQVGA (160×120) screens.
-
-*Created for the 2025 Meichu Hackathon.*
-
-## Features
-
-- **Ultra-low resolution support**: Optimized for QVGA (240×320) and QQVGA (160×120) displays
-- **Feature phone navigation**: Keyboard mapping for 7 keys with visual feedback
-- **Directional keypad**: Visual arrow keypad that responds to arrow keys
-- **Visual feedback**: All navigation elements highlight when corresponding keys are pressed
-- **Responsive design**: Font sizes and layouts automatically adjust for different screen sizes
-- **Static export ready**: Pre-configured for GitHub Pages deployment
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
-### Development
-
-Run the development server:
+First, run the development server:
 
 ```bash
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the website.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-### Building for Production
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-Build and export static files:
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-```bash
-npm run build
-```
+## Learn More
 
-Static files will be generated in the `out/` directory.
+To learn more about Next.js, take a look at the following resources:
 
-## Navigation Controls
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-### Navigation Bar (Bottom)
-| Key | Action | Visual Indicator |
-|-----|--------|------------------|
-| Escape | Left button (SL) | Highlights L: SL |
-| Enter | Center button | Highlights Enter |
-| F12 | Right button (SR) | Highlights R: SR |
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-### Directional Keypad (Center)
-| Key | Action | Visual Indicator |
-|-----|--------|------------------|
-| Arrow Up | Up navigation | Highlights ↑ button |
-| Arrow Down | Down navigation | Highlights ↓ button |
-| Arrow Left | Left navigation | Highlights ← button |
-| Arrow Right | Right navigation | Highlights → button |
+## Deploy on Vercel
 
-## Project Structure
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-- `app/page.tsx` - Main welcome page with keypad
-- `app/components/Navigation.tsx` - Fixed bottom navigation bar
-- `app/components/Keypad.tsx` - Visual directional keypad component
-- `app/components/KeyboardHandler.tsx` - Global keyboard event management
-- `app/components/NavigationContext.tsx` - State management for all button highlights
-- `app/components/ClientLayout.tsx` - Client-side layout wrapper
-- `app/globals.css` - Feature phone responsive breakpoints
-
-## Deployment
-
-### Automatic GitHub Actions
-The project includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that automatically:
-- Builds the static site on pushes to main branch
-- Deploys to `gh-pages` branch
-- Requires Pages to be configured with Source: "Deploy from a branch" → `gh-pages`
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

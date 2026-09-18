@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
 :root {
   --background: #ffffff;
@@ -23,30 +24,4 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-}
-
-/* Feature phone optimizations */
-@media (max-width: 320px) {
-  body {
-    font-size: 12px;
-  }
-}
-
-@media (max-width: 240px) {
-  body {
-    font-size: 10px;
-  }
-}
-
-/* QVGA (240x320) and QQVGA (160x120) support */
-.feature-phone-container {
-  max-width: 320px;
-  margin: 0 auto;
-}
-
-@media (max-width: 160px) {
-  .feature-phone-container {
-    max-width: 160px;
-    font-size: 8px;
-  }
 }

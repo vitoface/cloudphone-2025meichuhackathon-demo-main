@@ -294,6 +294,36 @@ These values are generated automatically by the database.
 
 ---
 
+### `GET /api/griddensity`
+
+Purpose:
+
+Return aggregated high-density map regions from the `GridDensity` table.
+
+Grid density rules:
+
+- A successful `POST /api/newMapInfo` schedules a refresh.
+- Reset the timer whenever another map record is created.
+- Refresh after one full minute passes without another successful `MapInfo`
+  insert.
+- Divide valid coordinates into `0.01 × 0.01` degree grid cells.
+- Store only cells containing at least three events.
+- Store the cell bounds, average marker coordinate, event count, dominant
+  non-null event, and refresh timestamp.
+- Ignore MapInfo records with invalid coordinates while calculating density.
+- Replace stale density cells after every successful refresh.
+
+The endpoint returns:
+
+```json
+{
+  "success": true,
+  "data": []
+}
+```
+
+---
+
 ## Supabase Rules
 
 Supabase is the primary database backend.
@@ -342,6 +372,22 @@ latitude
 title
 description
 events
+```
+
+The aggregated density table `GridDensity` contains:
+
+```text
+grid_key
+min_latitude
+max_latitude
+min_longtitude
+max_longtitude
+center_latitude
+center_longtitude
+event_count
+dominant_event
+updated_at
+refresh_token
 ```
 
 The `events` column uses the PostgreSQL enum type `map_event` and is nullable

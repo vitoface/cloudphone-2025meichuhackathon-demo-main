@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { scheduleGridDensityRefresh } from "@/lib/grid-density";
 
 const MAP_EVENTS = [
   "car_crash",
@@ -111,7 +112,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data: data_his, error: error_his } = await supabase
+    scheduleGridDensityRefresh();
+
+    const { error: error_his } = await supabase
       .from("MapInfo_history")
       .insert({
         longtitude: lng,

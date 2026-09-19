@@ -6,6 +6,140 @@ import { useRouter } from 'next/navigation';
 // 🌟 路徑改為 @/component/useGeolocation
 import { useGeolocation } from '@/component/useGeolocation'; 
 
+// ==========================================
+// 🌐 多國語言字典 (i18n Translations)
+// ==========================================
+const translations = {
+  'zh': {
+    title: '周遭路況列表',
+    controls: '[2]上滑 [5]下滑 | [0]返回',
+    locating: '定位中...',
+    loading: '載入路況中...',
+    noEvents: '周遭暫無突發路況',
+    coord: '座標',
+    back: '返回地圖',
+    distPrefix: '距離',
+    evtCrash: { label: '發生車禍', prefix: '[嚴重]' },
+    evtJam: { label: '嚴重塞車', prefix: '[提醒]' },
+    evtWork: { label: '道路施工', prefix: '[注意]' },
+    evtDanger: { label: '不明危險', prefix: '[危險]' },
+    evtDisaster: { label: '天災路況', prefix: '[警戒]' },
+    evtDefault: { label: '一般事件', prefix: '[提醒]' }
+  },
+  'en': {
+    title: 'Nearby Traffic',
+    controls: '[2]Up [5]Down | [0]Back',
+    locating: 'Locating...',
+    loading: 'Loading events...',
+    noEvents: 'No events nearby',
+    coord: 'Coord',
+    back: 'Back to Map',
+    distPrefix: 'Dist',
+    evtCrash: { label: 'Car Crash', prefix: '[Severe]' },
+    evtJam: { label: 'Traffic Jam', prefix: '[Alert]' },
+    evtWork: { label: 'Roadwork', prefix: '[Notice]' },
+    evtDanger: { label: 'Danger', prefix: '[Danger]' },
+    evtDisaster: { label: 'Disaster', prefix: '[Warning]' },
+    evtDefault: { label: 'General', prefix: '[Notice]' }
+  },
+  'ar': { // 阿拉伯文
+    title: 'حركة المرور القريبة',
+    controls: '[2]أعلى [5]أسفل | [0]رجوع',
+    locating: 'تحديد الموقع...',
+    loading: 'جاري التحميل...',
+    noEvents: 'لا توجد أحداث',
+    coord: 'إحداثيات',
+    back: 'رجوع للخريطة',
+    distPrefix: 'بعد',
+    evtCrash: { label: 'حادث سير', prefix: '[شديد]' },
+    evtJam: { label: 'ازدحام', prefix: '[تنبيه]' },
+    evtWork: { label: 'أعمال طرق', prefix: '[ملاحظة]' },
+    evtDanger: { label: 'خطر مجهول', prefix: '[خطر]' },
+    evtDisaster: { label: 'كارثة', prefix: '[تحذير]' },
+    evtDefault: { label: 'عام', prefix: '[تنبيه]' }
+  },
+  'fr': { // 法文
+    title: 'Trafic à proximité',
+    controls: '[2]Haut [5]Bas | [0]Retour',
+    locating: 'Localisation...',
+    loading: 'Chargement...',
+    noEvents: 'Aucun événement',
+    coord: 'Coord',
+    back: 'Retour carte',
+    distPrefix: 'Dist',
+    evtCrash: { label: 'Accident', prefix: '[Grave]' },
+    evtJam: { label: 'Bouchon', prefix: '[Alerte]' },
+    evtWork: { label: 'Travaux', prefix: '[Info]' },
+    evtDanger: { label: 'Danger', prefix: '[Danger]' },
+    evtDisaster: { label: 'Désastre', prefix: '[Avert]' },
+    evtDefault: { label: 'Général', prefix: '[Info]' }
+  },
+  'pt': { // 葡萄牙文
+    title: 'Trânsito Próximo',
+    controls: '[2]Cima [5]Baixo | [0]Voltar',
+    locating: 'Localizando...',
+    loading: 'Carregando...',
+    noEvents: 'Sem eventos',
+    coord: 'Coord',
+    back: 'Voltar ao Mapa',
+    distPrefix: 'Dist',
+    evtCrash: { label: 'Acidente', prefix: '[Grave]' },
+    evtJam: { label: 'Congestão', prefix: '[Alerta]' },
+    evtWork: { label: 'Obras', prefix: '[Aviso]' },
+    evtDanger: { label: 'Perigo', prefix: '[Perigo]' },
+    evtDisaster: { label: 'Desastre', prefix: '[Aviso]' },
+    evtDefault: { label: 'Geral', prefix: '[Aviso]' }
+  },
+  'vi': { // 越南文
+    title: 'Giao thông gần đây',
+    controls: '[2]Lên [5]Xuống | [0]Về',
+    locating: 'Đang định vị...',
+    loading: 'Đang tải...',
+    noEvents: 'Không có sự kiện',
+    coord: 'Tọa độ',
+    back: 'Về Bản đồ',
+    distPrefix: 'Cách',
+    evtCrash: { label: 'Tai nạn', prefix: '[Nghiêm trọng]' },
+    evtJam: { label: 'Tắc đường', prefix: '[Báo động]' },
+    evtWork: { label: 'Thi công', prefix: '[Lưu ý]' },
+    evtDanger: { label: 'Nguy hiểm', prefix: '[Nguy hiểm]' },
+    evtDisaster: { label: 'Thiên tai', prefix: '[Cảnh báo]' },
+    evtDefault: { label: 'Chung', prefix: '[Lưu ý]' }
+  },
+  'ha': { // 豪薩語
+    title: 'Trafik a Kusa',
+    controls: '[2]Sama [5]Ƙasa | [0]Koma',
+    locating: 'Nemo wuri...',
+    loading: 'Ana lodi...',
+    noEvents: 'Babu alama',
+    coord: 'Tsari',
+    back: 'Koma Taswira',
+    distPrefix: 'Nisa',
+    evtCrash: { label: 'Hatsari', prefix: '[Tsananin]' },
+    evtJam: { label: 'Cunkoso', prefix: '[Gargaɗi]' },
+    evtWork: { label: 'Aiki', prefix: '[Lura]' },
+    evtDanger: { label: 'Hadari', prefix: '[Hadari]' },
+    evtDisaster: { label: 'Bala\'i', prefix: '[Gargaɗi]' },
+    evtDefault: { label: 'Gaba ɗaya', prefix: '[Lura]' }
+  },
+  'sw': { // 斯瓦希里語
+    title: 'Trafiki Karibu',
+    controls: '[2]Juu [5]Chini | [0]Rudi',
+    locating: 'Inatafuta...',
+    loading: 'Inapakia...',
+    noEvents: 'Hakuna matukio',
+    coord: 'Kuratibu',
+    back: 'Rudi Ramani',
+    distPrefix: 'Umbali',
+    evtCrash: { label: 'Ajali', prefix: '[Kubwa]' },
+    evtJam: { label: 'Msongamano', prefix: '[Tahadhari]' },
+    evtWork: { label: 'Ujenzi', prefix: '[Taarifa]' },
+    evtDanger: { label: 'Hatari', prefix: '[Hatari]' },
+    evtDisaster: { label: 'Janga', prefix: '[Onyo]' },
+    evtDefault: { label: 'Kawaida', prefix: '[Taarifa]' }
+  }
+};
+
 interface MapInfoItem {
   id: string | number;
   created_at: string;
@@ -15,16 +149,8 @@ interface MapInfoItem {
   description?: string;
 }
 
-const EVENT_CONFIG: Record<
-  string,
-  { label: string; prefix: string; color: string }
-> = {
-  car_crash: { label: '發生車禍', prefix: '[嚴重]', color: '#dc2626' },
-  traffic_jam: { label: '嚴重塞車', prefix: '[提醒]', color: '#ea580c' },
-  roadwork: { label: '道路施工', prefix: '[注意]', color: '#d97706' },
-  unknown_danger: { label: '不明危險', prefix: '[危險]', color: '#e11d48' },
-  natural_disaster: { label: '天災路況', prefix: '[警戒]', color: '#7c3aed' },
-};
+// 保留過濾用的合法事件清單
+const VALID_EVENTS = ['car_crash', 'traffic_jam', 'roadwork', 'unknown_danger', 'natural_disaster'];
 
 function calculateDistance(
   lat1: number,
@@ -45,11 +171,12 @@ function calculateDistance(
   return R * c;
 }
 
-function formatDistance(distanceKm: number): string {
+// 支援多國語言的距離格式化
+function formatDistance(distanceKm: number, prefixLabel: string): string {
   if (distanceKm < 1) {
-    return `距離 ${Math.round(distanceKm * 1000)}m`;
+    return `${prefixLabel} ${Math.round(distanceKm * 1000)}m`;
   }
-  return `距離 ${distanceKm.toFixed(1)}km`;
+  return `${prefixLabel} ${distanceKm.toFixed(1)}km`;
 }
 
 export default function ListPage() {
@@ -57,10 +184,41 @@ export default function ListPage() {
   const [events, setEvents] = useState<(MapInfoItem & { distance?: number })[]>([]);
   const [apiLoading, setApiLoading] = useState(true);
   
+  // 🌐 語言狀態管理
+  const [langCode, setLangCode] = useState<string>('zh');
+  
   // 用於綁定中間的列表容器，以程式化方式控制捲動
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { location, errorMsg, loading: geoLoading } = useGeolocation({ autoFetch: true });
+
+  // 🌐 初始化抓取使用者系統語言
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const navLang = navigator.language.split('-')[0].toLowerCase();
+      if (navigator.language.toLowerCase().startsWith('zh')) {
+        setLangCode('zh');
+      } else if (translations[navLang as keyof typeof translations]) {
+        setLangCode(navLang);
+      } else {
+        setLangCode('en'); // 找不到支援的語言時，強制使用英文
+      }
+    }
+  }, []);
+
+  const t = translations[langCode as keyof typeof translations] || translations['zh'];
+
+  // 動態獲取本地化的事件標籤與顏色
+  const getEventConfig = (type: string) => {
+    switch (type) {
+      case 'car_crash': return { ...t.evtCrash, color: '#dc2626' };
+      case 'traffic_jam': return { ...t.evtJam, color: '#ea580c' };
+      case 'roadwork': return { ...t.evtWork, color: '#d97706' };
+      case 'unknown_danger': return { ...t.evtDanger, color: '#e11d48' };
+      case 'natural_disaster': return { ...t.evtDisaster, color: '#7c3aed' };
+      default: return { ...t.evtDefault, color: '#374151' };
+    }
+  };
 
   // 監聽實體按鍵：2上 5下 0返回
   useEffect(() => {
@@ -97,7 +255,7 @@ export default function ListPage() {
       const data: MapInfoItem[] = await res.json();
 
       const processed = data
-        .filter((item) => item.events && EVENT_CONFIG[item.events])
+        .filter((item) => item.events && VALID_EVENTS.includes(item.events))
         .map((item) => {
           const dist =
             userLat !== undefined && userLng !== undefined
@@ -129,6 +287,7 @@ export default function ListPage() {
 
   return (
     <main
+      dir={langCode === 'ar' ? 'rtl' : 'ltr'} // 🌟 自動支援阿拉伯文的右到左排版
       style={{
         width: '100%',
         maxWidth: '240px',          // 最大寬度保護
@@ -147,10 +306,10 @@ export default function ListPage() {
     >
       {/* 頂部狀態與提示區 */}
       <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '2px', color: '#000000' }}>
-        周遭路況列表
+        {t.title}
       </h2>
       <div style={{ fontSize: '10px', color: '#6b7280', marginBottom: '6px' }}>
-        [2]上滑 [5]下滑 | [0]返回
+        {t.controls}
       </div>
 
       {/* 模擬手機大小的顯示容器 (列表區) */}
@@ -173,19 +332,15 @@ export default function ListPage() {
       >
         {isPageLoading ? (
           <div style={{ fontSize: '12px', color: '#6b7280', padding: '16px', textAlign: 'center' }}>
-            {geoLoading ? '定位中...' : '載入路況中...'}
+            {geoLoading ? t.locating : t.loading}
           </div>
         ) : events.length === 0 ? (
           <div style={{ fontSize: '12px', color: '#6b7280', padding: '16px', textAlign: 'center' }}>
-            周遭暫無突發路況
+            {t.noEvents}
           </div>
         ) : (
           events.map((item) => {
-            const config = EVENT_CONFIG[item.events || ''] || {
-              label: '一般事件',
-              prefix: '[提醒]',
-              color: '#374151',
-            };
+            const config = getEventConfig(item.events || '');
 
             return (
               <div
@@ -207,12 +362,12 @@ export default function ListPage() {
                   </span>
                   {item.distance !== undefined && (
                     <span style={{ fontSize: '10px', fontWeight: 'bold', backgroundColor: '#e5e7eb', color: '#374151', padding: '2px 4px', borderRadius: '3px' }}>
-                      {formatDistance(item.distance)}
+                      {formatDistance(item.distance, t.distPrefix)}
                     </span>
                   )}
                 </div>
                 <div style={{ fontSize: '11px', color: '#4b5563' }}>
-                  {item.description || `座標: ${item.latitude.toFixed(3)}, ${item.longtitude.toFixed(3)}`}
+                  {item.description || `${t.coord}: ${item.latitude.toFixed(3)}, ${item.longtitude.toFixed(3)}`}
                 </div>
               </div>
             );
@@ -243,7 +398,7 @@ export default function ListPage() {
           [ 0 ]
         </span>
         <span style={{ fontSize: '12px', color: '#991b1b', fontWeight: 'bold' }}>
-          返回地圖
+          {t.back}
         </span>
       </div>
     </main>

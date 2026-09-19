@@ -746,7 +746,7 @@ export default function HomePage() {
         mapInstanceRef.current = null;
       }
     };
-  }, [updateLocation, t.myLocation, t.destLocation]);
+  }, [updateLocation]);
 
   // 按鍵控制
   useEffect(() => {
@@ -847,7 +847,7 @@ export default function HomePage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [router, updateLocation, t.destLocation]);
+  }, [router, updateLocation]);
 
   return (
     <main

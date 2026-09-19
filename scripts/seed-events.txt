@@ -1,0 +1,85 @@
+// 注意一下使用方式：進入網頁的檢查，然後再Console複製進去
+
+const MAP_EVENTS = ["car_crash", "traffic_jam", "roadwork", "unknown_danger", "natural_disaster"];
+const EVENT_DICT = {
+  "car_crash": "發生車禍",
+  "traffic_jam": "嚴重塞車",
+  "roadwork": "道路施工",
+  "unknown_danger": "不明危險",
+  "natural_disaster": "自然災害"
+};
+
+// 台灣大範圍都會熱區設定
+const HOTSPOTS = [
+  { name: "大台北都會區", lat: 25.033, lng: 121.5654 },
+  { name: "大新竹地區", lat: 24.8138, lng: 120.9675 },
+  { name: "大台中地區", lat: 24.1477, lng: 120.6736 },
+  { name: "大高雄地區", lat: 22.6273, lng: 120.3014 },
+];
+
+function randomInRange(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+async function seedEvents() {
+  const TOTAL_RECORDS = 300; // 擴大生成筆數
+  console.log(`🚀 開始透過 Console 生成 ${TOTAL_RECORDS} 筆大範圍模擬資料...`);
+  let successCount = 0;
+
+  for (let i = 1; i <= TOTAL_RECORDS; i++) {
+    let lat, lng, areaName;
+
+    // 80% 集中在西部都會圈，20% 全台隨機分佈 (涵蓋山區、花東)
+    if (Math.random() < 0.8) {
+      const spot = HOTSPOTS[Math.floor(Math.random() * HOTSPOTS.length)];
+      // 增加偏移量 (約 15~20 公里)，散佈在整個都會圈
+      lat = spot.lat + randomInRange(-0.15, 0.15);
+      lng = spot.lng + randomInRange(-0.15, 0.15);
+      areaName = spot.name;
+    } else {
+      // 台灣全島大略邊界
+      lat = randomInRange(22.0, 25.2);
+      lng = randomInRange(120.0, 122.0);
+      areaName = "台灣其他地區";
+    }
+
+    // 格式化為 14 位小數點的真實感座標
+    lat = Number(lat.toFixed(14));
+    lng = Number(lng.toFixed(14));
+
+    const eventType = MAP_EVENTS[Math.floor(Math.random() * MAP_EVENTS.length)];
+    const title = `${areaName} - ${EVENT_DICT[eventType]}`;
+
+    try {
+      // 相對路徑：自動適應 localhost 或 Vercel 正式網址
+      const res = await fetch("/api/newMapinfo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          longtitude: lng, // 配合資料庫的拼法
+          latitude: lat,
+          title: title,
+          description: "[全台模擬測試] 透過自動化腳本生成",
+          events: eventType,
+        }),
+      });
+
+      if (res.ok) {
+        console.log(`✅ [${i}/${TOTAL_RECORDS}] 成功新增: ${title}`);
+        successCount++;
+      } else {
+        console.error(`❌ [${i}/${TOTAL_RECORDS}] API 拒絕寫入:`, await res.text());
+      }
+    } catch (error) {
+      console.error(`❌ [${i}/${TOTAL_RECORDS}] 網路連線錯誤:`, error);
+    }
+
+    // 延遲 150 毫秒，避免 Next.js 伺服器因為瞬間請求過多而卡死
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  }
+
+  console.log(`\n🎉 生成完畢！共成功新增 ${successCount} 筆資料。請操作手機介面縮小地圖查看全台分佈！`);
+}
+
+// 執行！
+seedEvents();

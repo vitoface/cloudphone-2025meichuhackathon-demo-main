@@ -132,7 +132,7 @@ export default function ListPage() {
       style={{
         width: '100%',
         maxWidth: '240px',          // 最大寬度保護
-        height: '100vh',            // 滿版高度
+        height: '320px',            // 直接鎖定 320px 高度
         maxHeight: '320px',         // 限制在功能機的最大高度內
         margin: '0 auto',
         overflow: 'hidden',         // 隱藏整頁的捲動，避免雙層捲軸
@@ -159,7 +159,9 @@ export default function ListPage() {
         style={{
           width: '210px',           // 與圖二相同的 210px 寬度
           flex: 1,                  // 自動填滿標題與底部按鈕之間的剩餘空間
-          overflowY: 'hidden',      // 隱藏預設捲軸，靠 2/5 按鍵程式化滑動
+          overflowY: 'scroll',      // 保持可滾動特性
+          scrollbarWidth: 'none',  // Firefox 隱藏捲軸
+          msOverflowStyle: 'none', // IE/Edge 隱藏捲軸
           border: '1px solid #d1d5db',
           borderRadius: '4px',
           backgroundColor: '#f9fafb',
@@ -222,6 +224,7 @@ export default function ListPage() {
       <div
         onClick={() => router.push('/')}
         style={{
+          flexShrink: 0,           // 關鍵：防止被壓縮或推擠出畫面
           cursor: 'pointer',
           marginTop: '6px',
           marginBottom: '2px',

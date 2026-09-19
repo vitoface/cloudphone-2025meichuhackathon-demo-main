@@ -1,52 +1,37 @@
-import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    const { lat, lng, nearby } = body;
+    const message = body.message;
 
-    const response = await openai.responses.create({
-      model: "gpt-5.5",
+    if (!message) {
+      return NextResponse.json(
+        { error: "message is required" },
+        { status: 400 }
+      );
+    }
 
-      instructions: `
-You are a pedestrian safety assistant.
-
-Analyze the supplied location information.
-Do not claim that an area is absolutely safe.
-Only make conclusions based on the supplied data.
-`,
-
-      input: `
-Current location:
-latitude: ${lat}
-longitude: ${lng}
-
-Nearby map information:
-${JSON.stringify(nearby, null, 2)}
-
-Analyze possible safety concerns and give a short recommendation.
-`,
+    const response = await ai.models.generateContent({
+      model: "gemini-3.8-flash",
+      contents: message,
     });
 
     return NextResponse.json({
-      analysis: response.output_text,
+      result: response.text,
     });
   } catch (error) {
     console.error(error);
 
     return NextResponse.json(
-      {
-        error: "AI analysis failed",
-      },
-      {
-        status: 500,
-      }
+      { error: "Gemini API request failed" },
+      { status: 500 }
     );
   }
 }

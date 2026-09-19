@@ -12,17 +12,19 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+interface ProximityReport {
+  id: number | string;
+  latitude: number;
+  longtitude?: number;
+  longitude?: number;
+  title: string | null;
+  description?: string | null;
+  created_at?: string;
+}
+
 interface ProximityAlertProps {
   location: { lat: number; lng: number } | null;
-  reports: Array<{
-    id: number | string;
-    latitude: number;
-    longtitude?: number;
-    longitude?: number;
-    title: string;
-    description?: string;
-    created_at?: string;
-  }>;
+  reports: ProximityReport[];
 }
 
 export default function ProximityAlert({ location, reports }: ProximityAlertProps) {
@@ -31,7 +33,7 @@ export default function ProximityAlert({ location, reports }: ProximityAlertProp
   // 記錄已通知過的事件 ID (黑名單)
   const warnedIdsRef = useRef<Set<string>>(new Set());
   
-  const getEventId = (evt: any) => {
+  const getEventId = (evt: ProximityReport) => {
     if (evt.id !== undefined && evt.id !== null) return String(evt.id);
     const lng = evt.longtitude || evt.longitude;
     return `event-${evt.latitude}-${lng}`;

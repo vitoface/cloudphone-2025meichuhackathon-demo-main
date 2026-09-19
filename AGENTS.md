@@ -218,6 +218,25 @@ Expected responsibilities:
 - Treat "nearby" as within `0.01` degrees of each valid supplied coordinate.
 - If either supplied coordinate is empty, non-numeric, or outside its valid
   range, ignore all coordinate filters and return every marker.
+- Keep an in-memory refresh timestamp and, at most once every five minutes per
+  server instance, remove expired records before returning map data.
+- Determine expiry from `events` and `created_at` using these lifetimes:
+
+```text
+car_crash:          60 minutes
+traffic_jam:        30 minutes
+roadwork:           24 hours
+unknown_danger:     60 minutes
+natural_disaster:   24 hours
+null event:          5 minutes
+```
+
+- Records whose `events` value is `null` expire after five minutes. Records
+  with an unrecognized non-null event or invalid `created_at` must not be
+  deleted automatically.
+- Perform automatic deletion with the server-only Supabase client. A cleanup
+  failure should be logged but should not prevent the GET endpoint from
+  returning map data.
 - Handle database errors.
 
 Examples:

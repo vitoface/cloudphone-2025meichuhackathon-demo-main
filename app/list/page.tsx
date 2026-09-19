@@ -1,7 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+
+// 🌟 路徑改為 @/component/useGeolocation
+import { useGeolocation } from '@/component/useGeolocation'; 
 
 interface MapInfoItem {
   id: string | number;
@@ -12,7 +15,6 @@ interface MapInfoItem {
   description?: string;
 }
 
-// 對應 route.ts 中定義的事件型別與樣式配置
 const EVENT_CONFIG: Record<
   string,
   { label: string; prefix: string; color: string }
@@ -24,14 +26,13 @@ const EVENT_CONFIG: Record<
   natural_disaster: { label: '天災路況', prefix: '[警戒]', color: '#7c3aed' },
 };
 
-// 計算兩點經緯度的直線距離 (km)
 function calculateDistance(
   lat1: number,
   lon1: number,
   lat2: number,
   lon2: number
 ): number {
-  const R = 6371; // 地球半徑 (km)
+  const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
@@ -53,10 +54,11 @@ function formatDistance(distanceKm: number): string {
 
 export default function ListPage() {
   const router = useRouter();
-  const [events, setEvents] = useState<
-    (MapInfoItem & { distance?: number })[]
-  >([]);
-  const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState<(MapInfoItem & { distance?: number })[]>([]);
+  const [apiLoading, setApiLoading] = useState(true);
+
+  // 👇 使用你的自訂 Hook (開啟 autoFetch)
+  const { location, errorMsg, loading: geoLoading } = useGeolocation({ autoFetch: true });
 
   // 監聽實體按鍵：按 0 返回主畫面
   useEffect(() => {
@@ -71,57 +73,60 @@ export default function ListPage() {
     };
   }, [router]);
 
-  // Fetch API 資料
-  useEffect(() => {
-    async function fetchEvents(userLat?: number, userLng?: number) {
-      setLoading(true);
-      try {
-        // 若有取得定位，帶上參數（注意 route 命名為 longtitude）
-        const params = new URLSearchParams();
-        if (userLat !== undefined && userLng !== undefined) {
-          params.set('latitude', userLat.toString());
-          params.set('longtitude', userLng.toString());
-        }
-
-        const res = await fetch(`/api/mapinfo?${params.toString()}`);
-        if (!res.ok) throw new Error('Failed to fetch events');
-        
-        const data: MapInfoItem[] = await res.json();
-
-        // 排除無效事件並計算相對距離
-        const processed = data
-          .filter((item) => item.events && EVENT_CONFIG[item.events])
-          .map((item) => {
-            const dist =
-              userLat !== undefined && userLng !== undefined
-                ? calculateDistance(userLat, userLng, item.latitude, item.longtitude)
-                : undefined;
-            return { ...item, distance: dist };
-          })
-          .sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
-
-        setEvents(processed);
-      } catch (err) {
-        console.error('Fetch error:', err);
-      } finally {
-        setLoading(false);
+  // 定義抓取 API 的函數
+  async function fetchEvents(userLat?: number, userLng?: number) {
+    setApiLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (userLat !== undefined && userLng !== undefined) {
+        params.set('latitude', userLat.toString());
+        params.set('longtitude', userLng.toString());
       }
-    }
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          fetchEvents(pos.coords.latitude, pos.coords.longitude);
-        },
-        () => {
-          // 若無法取得定位則抓取全量事件
-          fetchEvents();
-        }
-      );
-    } else {
+      // 🚨 解決延遲更新的關鍵：加上 cache: 'no-store'，強制每次抓取最新資料 🚨
+      const res = await fetch(`/api/mapinfo?${params.toString()}`, { 
+        cache: 'no-store' 
+      });
+      
+      if (!res.ok) throw new Error('Failed to fetch events');
+      
+      const data: MapInfoItem[] = await res.json();
+
+      const processed = data
+        .filter((item) => item.events && EVENT_CONFIG[item.events])
+        .map((item) => {
+          const dist =
+            userLat !== undefined && userLng !== undefined
+              ? calculateDistance(userLat, userLng, item.latitude, item.longtitude)
+              : undefined;
+          return { ...item, distance: dist };
+        })
+        .sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
+
+      setEvents(processed);
+    } catch (err) {
+      console.error('Fetch error:', err);
+    } finally {
+      setApiLoading(false);
+    }
+  }
+
+  // 整合 API 呼叫與 Geolocation 的結果
+  useEffect(() => {
+    // 如果定位還在載入中，先不要打 API
+    if (geoLoading) return;
+
+    // 如果成功取得座標，帶座標去查詢；如果發生錯誤 (例如拒絕授權)，就不帶座標查詢
+    if (location) {
+      fetchEvents(location.lat, location.lng);
+    } else if (errorMsg) {
       fetchEvents();
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location, geoLoading, errorMsg]);
+
+  // 畫面是否處於載入狀態 (定位中 或 API請求中)
+  const isPageLoading = geoLoading || (apiLoading && events.length === 0);
 
   return (
     <main
@@ -133,32 +138,17 @@ export default function ListPage() {
         fontFamily: 'sans-serif',
       }}
     >
-      <h2
-        style={{
-          fontSize: '14px',
-          fontWeight: 'bold',
-          marginBottom: '4px',
-          color: '#000000',
-        }}
-      >
+      <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px', color: '#000000' }}>
         周遭路況列表
       </h2>
       <div style={{ fontSize: '10px', color: '#6b7280', marginBottom: '12px' }}>
         按 [0] 返回地圖
       </div>
 
-      {/* 清單區 */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '6px',
-        }}
-      >
-        {loading ? (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+        {isPageLoading ? (
           <div style={{ fontSize: '12px', color: '#6b7280', padding: '16px' }}>
-            載入中...
+            {geoLoading ? '正在取得定位...' : '正在載入路況...'}
           </div>
         ) : events.length === 0 ? (
           <div style={{ fontSize: '12px', color: '#6b7280', padding: '16px' }}>
@@ -184,34 +174,12 @@ export default function ListPage() {
                   textAlign: 'left',
                 }}
               >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '4px',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: '13px',
-                      color: config.color,
-                      fontWeight: 'bold',
-                    }}
-                  >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '13px', color: config.color, fontWeight: 'bold' }}>
                     {config.prefix} {config.label}
                   </span>
                   {item.distance !== undefined && (
-                    <span
-                      style={{
-                        fontSize: '10px',
-                        fontWeight: 'bold',
-                        backgroundColor: '#e5e7eb',
-                        color: '#374151',
-                        padding: '2px 4px',
-                        borderRadius: '3px',
-                      }}
-                    >
+                    <span style={{ fontSize: '10px', fontWeight: 'bold', backgroundColor: '#e5e7eb', color: '#374151', padding: '2px 4px', borderRadius: '3px' }}>
                       {formatDistance(item.distance)}
                     </span>
                   )}
@@ -243,17 +211,7 @@ export default function ListPage() {
           alignItems: 'center',
         }}
       >
-        <span
-          style={{
-            fontSize: '12px',
-            fontWeight: 'bold',
-            backgroundColor: '#dc2626',
-            color: '#ffffff',
-            padding: '2px 6px',
-            borderRadius: '3px',
-            marginRight: '10px',
-          }}
-        >
+        <span style={{ fontSize: '12px', fontWeight: 'bold', backgroundColor: '#dc2626', color: '#ffffff', padding: '2px 6px', borderRadius: '3px', marginRight: '10px' }}>
           [ 0 ]
         </span>
         <span style={{ fontSize: '13px', color: '#991b1b', fontWeight: 'bold' }}>

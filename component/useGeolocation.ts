@@ -1,104 +1,81 @@
 // component/useGeolocation.ts
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface GeolocationOptions {
-  watch?: boolean;     // 是否持續追蹤座標變化
-  autoFetch?: boolean; // 是否在元件載入時自動抓取一次定位
+  autoFetch?: boolean;
 }
 
 export function useGeolocation(options: GeolocationOptions = {}) {
-  const { watch = false, autoFetch = true } = options;
+  const { autoFetch = true } = options;
 
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const watchIdRef = useRef<number | null>(null);
 
-  const handleError = useCallback((error: GeolocationPositionError) => {
-    switch (error.code) {
-      case error.PERMISSION_DENIED:
-        setErrorMsg('未允許定位權限');
-        break;
-      case error.POSITION_UNAVAILABLE:
-        setErrorMsg('無法取得目前位置');
-        break;
-      case error.TIMEOUT:
-        setErrorMsg('定位請求逾時');
-        break;
-      default:
-        setErrorMsg('發生未知錯誤');
-        break;
+  // 新增：讓外部（例如地圖頁）可以手動更新精確位置，並跨頁面儲存
+  const updateLocation = useCallback((lat: number, lng: number) => {
+    const coords = { lat, lng };
+    setLocation(coords);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('user_precise_lat', lat.toString());
+      sessionStorage.setItem('user_precise_lng', lng.toString());
     }
-    setLoading(false);
   }, []);
 
-  const fetchLocation = useCallback((): Promise<{ lat: number; lng: number }> => {
-    return new Promise((resolve, reject) => {
-      setLoading(true);
-      setErrorMsg('');
+  const fetchLocation = useCallback(async (): Promise<{ lat: number; lng: number }> => {
+    setLoading(true);
+    setErrorMsg('');
 
-      if (typeof window === 'undefined' || !navigator.geolocation) {
-        const msg = '此裝置不支援定位功能';
-        setErrorMsg(msg);
-        setLoading(false);
-        reject(new Error(msg));
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const coords = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
+    try {
+      // 1. 先檢查 sessionStorage 是否已經有使用者手動校正過的位置
+      if (typeof window !== 'undefined') {
+        const savedLat = sessionStorage.getItem('user_precise_lat');
+        const savedLng = sessionStorage.getItem('user_precise_lng');
+        if (savedLat && savedLng) {
+          const coords = { lat: parseFloat(savedLat), lng: parseFloat(savedLng) };
           setLocation(coords);
           setLoading(false);
-          resolve(coords);
-        },
-        (error) => {
-          handleError(error);
-          reject(error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0, 
+          return coords; // 直接回傳記憶的精確位置
         }
-      );
-    });
-  }, [handleError]);
+      }
+
+      // 2. 如果沒有記憶位置，才呼叫 IP API 取得大致位置
+      const response = await fetch('https://ipapi.co/json/');
+      if (!response.ok) throw new Error('無法連接至 IP 定位服務');
+      
+      const data = await response.json();
+      if (data.error) throw new Error(data.reason || 'IP 定位服務發生錯誤');
+      if (typeof data.latitude !== 'number' || typeof data.longitude !== 'number') {
+        throw new Error('無法解析 IP 位置資訊');
+      }
+
+      const coords = { lat: data.latitude, lng: data.longitude };
+
+      // 將初次取得的 IP 位置也存入 sessionStorage 作為基準
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('user_precise_lat', coords.lat.toString());
+        sessionStorage.setItem('user_precise_lng', coords.lng.toString());
+      }
+
+      setLocation(coords);
+      return coords;
+    } catch (error: any) {
+      const msg = error.message || '發生未知錯誤';
+      setErrorMsg(msg);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !navigator.geolocation) return;
-
-    if (watch) {
-      setLoading(true);
-      setErrorMsg('');
-      watchIdRef.current = navigator.geolocation.watchPosition(
-        (position) => {
-          setLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
-          setLoading(false);
-          setErrorMsg('');
-        },
-        handleError,
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-      );
-    } else if (autoFetch) {
+    if (autoFetch) {
       fetchLocation().catch(() => {});
     }
+  }, [autoFetch, fetchLocation]);
 
-    return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-    };
-  }, [watch, autoFetch, fetchLocation, handleError]);
-
-  return { location, errorMsg, loading, fetchLocation };
+  // 將 updateLocation 匯出，讓 page 檔可以呼叫
+  return { location, errorMsg, loading, fetchLocation, updateLocation };
 }

@@ -15,7 +15,7 @@ const REPORT_OPTIONS = [
 
 export default function ReportPage() {
   const router = useRouter();
-  const { fetchLocation, loading, errorMsg } = useGeolocation({ watch: false, autoFetch: false });
+  const { fetchLocation, loading, errorMsg } = useGeolocation({autoFetch: false });
 
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [statusMessage, setStatusMessage] = useState('請使用上下鍵選擇，按 Enter 回報');

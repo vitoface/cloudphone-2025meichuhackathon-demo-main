@@ -142,13 +142,9 @@ export default function ReportPage() {
   const router = useRouter();
   const { fetchLocation, loading, errorMsg } = useGeolocation({ autoFetch: false });
 
-<<<<<<< HEAD
   // 🌐 語言狀態管理
   const [langCode, setLangCode] = useState<string>('en');
 
-=======
-  const [langCode, setLangCode] = useState<string>('zh');
->>>>>>> 1f7fb8f5115203d29fc34efd1fca50eec3016b03
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [isReporting, setIsReporting] = useState(false);
   

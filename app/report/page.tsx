@@ -20,7 +20,8 @@ const translations = {
     serverError: '伺服器錯誤',
     networkError: '網路或定位失敗，請稍後再試。',
     gpsLocating: 'GPS 定位中...',
-    move: '移動', send: '送出', cancelBack: '取消返回'
+    move: '移動', send: '送出', cancelBack: '取消返回',
+    reportDescription: '透過實體按鍵手機回報'
   },
   'en': {
     pageTitle: 'Report Menu',
@@ -34,7 +35,8 @@ const translations = {
     serverError: 'Server error',
     networkError: 'Network/GPS failed, try again.',
     gpsLocating: 'Locating GPS...',
-    move: 'Move', send: 'Send', cancelBack: 'Cancel & Back'
+    move: 'Move', send: 'Send', cancelBack: 'Cancel & Back',
+    reportDescription: 'Reported via physical button phone'
   },
   'ar': {
     pageTitle: 'قائمة الإبلاغ',
@@ -48,7 +50,8 @@ const translations = {
     serverError: 'خطأ في الخادم',
     networkError: 'فشل الشبكة/الموقع، أعد المحاولة.',
     gpsLocating: 'جاري تحديد GPS...',
-    move: 'تحريك', send: 'إرسال', cancelBack: 'إلغاء ورجوع'
+    move: 'تحريك', send: 'إرسال', cancelBack: 'إلغاء ورجوع',
+    reportDescription: 'أُبلغ من خلال هاتف ضغط فيزيائي'
   },
   'fr': {
     pageTitle: 'Menu de signalement',
@@ -62,7 +65,8 @@ const translations = {
     serverError: 'Erreur serveur',
     networkError: 'Échec réseau/GPS, réessayez.',
     gpsLocating: 'Localisation GPS...',
-    move: 'Déplacer', send: 'Envoyer', cancelBack: 'Annuler & Retour'
+    move: 'Déplacer', send: 'Envoyer', cancelBack: 'Annuler & Retour',
+    reportDescription: 'Signalé via un téléphone à bouton physique'
   },
   'pt': {
     pageTitle: 'Menu de Relatos',
@@ -76,7 +80,8 @@ const translations = {
     serverError: 'Erro no servidor',
     networkError: 'Falha de rede/GPS, tente novamente.',
     gpsLocating: 'Localizando GPS...',
-    move: 'Mover', send: 'Enviar', cancelBack: 'Cancelar e Voltar'
+    move: 'Mover', send: 'Enviar', cancelBack: 'Cancelar e Voltar',
+    reportDescription: 'Relatado via telefone com botão físico'
   },
   'vi': {
     pageTitle: 'Menu Báo cáo',
@@ -90,7 +95,8 @@ const translations = {
     serverError: 'Lỗi máy chủ',
     networkError: 'Lỗi mạng/GPS, thử lại sau.',
     gpsLocating: 'Đang định vị GPS...',
-    move: 'Di chuyển', send: 'Gửi', cancelBack: 'Hủy & Quay lại'
+    move: 'Di chuyển', send: 'Gửi', cancelBack: 'Hủy & Quay lại',
+    reportDescription: 'Báo cáo qua điện thoại nút vật lý'
   },
   'ha': {
     pageTitle: 'Menu na Rahoto',
@@ -104,7 +110,8 @@ const translations = {
     serverError: 'Matsalar sabar',
     networkError: 'Matsalar intanet/GPS, sake gwadawa.',
     gpsLocating: 'Nemo GPS...',
-    move: 'Matsa', send: 'Aika', cancelBack: 'Soke & Koma'
+    move: 'Matsa', send: 'Aika', cancelBack: 'Soke & Koma',
+    reportDescription: 'An bayar da rahoto ta wayar maɓallin jiki'
   },
   'sw': {
     pageTitle: 'Menyu ya Ripoti',
@@ -118,7 +125,8 @@ const translations = {
     serverError: 'Hitilafu ya seva',
     networkError: 'Mtandao/GPS imeshindwa, jaribu tena.',
     gpsLocating: 'Inatafuta GPS...',
-    move: 'Sogeza', send: 'Tuma', cancelBack: 'Ghairi & Rudi'
+    move: 'Sogeza', send: 'Tuma', cancelBack: 'Ghairi & Rudi',
+    reportDescription: 'Imetoripotiwa kupitia simu ya kitufe cha mwili'
   }
 };
 
@@ -226,7 +234,7 @@ export default function ReportPage() {
       longtitude: lng,
       latitude: lat,
       title: option.title,
-      description: '透過實體按鍵手機回報',
+      description: t.reportDescription,
       events: option.event,
       created_at: new Date().toISOString(),
     };

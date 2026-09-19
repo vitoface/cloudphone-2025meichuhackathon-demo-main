@@ -17,7 +17,7 @@ const translations = {
     myLocation: '您的目前位置<br/>(可拖曳校正)', destLocation: '目標地點',
     legendNav: '導航', legendCrash: '車禍', legendJam: '塞車', legendWork: '施工', legendDisaster: '災害',
     move: '移動', zoom: '縮放', backStart: '回起點', setDest: '設中心為終點導航 (按*覆蓋)',
-    locate: '定位', list: '列表', report: '回報',
+    locate: '定位', list: '列表', report: '回報', analysis: '安全分析',
     center: '中心', start: '起點', locating: '定位中', mins: '分'
   },
   'en': {
@@ -28,7 +28,7 @@ const translations = {
     myLocation: 'Your Location<br/>(Drag to adjust)', destLocation: 'Destination',
     legendNav: 'Nav', legendCrash: 'Crash', legendJam: 'Jam', legendWork: 'Work', legendDisaster: 'Disaster',
     move: 'Move', zoom: 'Zoom', backStart: 'Start', setDest: 'Set Dest via Center (* to overwrite)',
-    locate: 'Locate', list: 'List', report: 'Report',
+    locate: 'Locate', list: 'List', report: 'Report', analysis: 'Analysis',
     center: 'Center', start: 'Start', locating: 'Locating', mins: 'min'
   },
   'ar': {
@@ -39,7 +39,7 @@ const translations = {
     myLocation: 'موقعك<br/>(اسحب للتعديل)', destLocation: 'الوجهة',
     legendNav: 'ملاحة', legendCrash: 'حادث', legendJam: 'ازدحام', legendWork: 'أعمال', legendDisaster: 'كارثة',
     move: 'تحريك', zoom: 'تكبير/تصغير', backStart: 'بداية', setDest: 'تعيين الوجهة بالمركز (* للتجاوز)',
-    locate: 'موقع', list: 'قائمة', report: 'إبلاغ',
+    locate: 'موقع', list: 'قائمة', report: 'إبلاغ', analysis: 'تحليل الأمان',
     center: 'مركز', start: 'بداية', locating: 'جاري التحديد', mins: 'دقيقة'
   },
   'fr': {
@@ -50,7 +50,7 @@ const translations = {
     myLocation: 'Votre position<br/>(Glisser pour ajuster)', destLocation: 'Destination',
     legendNav: 'Nav', legendCrash: 'Accident', legendJam: 'Bouchon', legendWork: 'Travaux', legendDisaster: 'Désastre',
     move: 'Déplacer', zoom: 'Zoom', backStart: 'Départ', setDest: 'Dest au centre (* pour écraser)',
-    locate: 'Loc', list: 'Liste', report: 'Signaler',
+    locate: 'Loc', list: 'Liste', report: 'Signaler', analysis: 'Analyse',
     center: 'Centre', start: 'Départ', locating: 'Loc...', mins: 'min'
   },
   'pt': {
@@ -61,7 +61,7 @@ const translations = {
     myLocation: 'Sua localização<br/>(Arraste para ajustar)', destLocation: 'Destino',
     legendNav: 'Nav', legendCrash: 'Acidente', legendJam: 'Congestão', legendWork: 'Obras', legendDisaster: 'Desastre',
     move: 'Mover', zoom: 'Zoom', backStart: 'Início', setDest: 'Destino no centro (* p/ sobrescrever)',
-    locate: 'Loc', list: 'Lista', report: 'Relatar',
+    locate: 'Loc', list: 'Lista', report: 'Relatar', analysis: 'Análise',
     center: 'Centro', start: 'Início', locating: 'Localizando', mins: 'min'
   },
   'vi': {
@@ -72,7 +72,7 @@ const translations = {
     myLocation: 'Vị trí của bạn<br/>(Kéo để sửa)', destLocation: 'Đích đến',
     legendNav: 'Dẫn đường', legendCrash: 'Tai nạn', legendJam: 'Tắc đường', legendWork: 'Thi công', legendDisaster: 'Thiên tai',
     move: 'Di chuyển', zoom: 'Thu phóng', backStart: 'Bắt đầu', setDest: 'Đặt đích ở giữa (* để ghi đè)',
-    locate: 'Định vị', list: 'Danh sách', report: 'Báo cáo',
+    locate: 'Định vị', list: 'Danh sách', report: 'Báo cáo', analysis: 'Phân tích',
     center: 'Trung tâm', start: 'Bắt đầu', locating: 'Đang tìm', mins: 'phút'
   },
   'ha': {
@@ -83,7 +83,7 @@ const translations = {
     myLocation: 'Wurinka<br/>(Ja don gyara)', destLocation: 'Inda zaka',
     legendNav: 'Tukwici', legendCrash: 'Hatsari', legendJam: 'Cunkoso', legendWork: 'Aiki', legendDisaster: 'Bala\'i',
     move: 'Matsa', zoom: 'Zuƙowa', backStart: 'Fara', setDest: 'Saka Cibiya don Inda zaka',
-    locate: 'Wuri', list: 'Jeri', report: 'Rahoto',
+    locate: 'Wuri', list: 'Jeri', report: 'Rahoto', analysis: 'Bincike',
     center: 'Cibiya', start: 'Fara', locating: 'Neman wuri', mins: 'min'
   },
   'sw': {
@@ -94,7 +94,7 @@ const translations = {
     myLocation: 'Eneo lako<br/>(Buruta kurekebisha)', destLocation: 'Kituo',
     legendNav: 'Njia', legendCrash: 'Ajali', legendJam: 'Msongamano', legendWork: 'Ujenzi', legendDisaster: 'Janga',
     move: 'Sogeza', zoom: 'Kuza', backStart: 'Anza', setDest: 'Weka kituo katikati (* kufunika)',
-    locate: 'Eneo', list: 'Orodha', report: 'Ripoti',
+    locate: 'Eneo', list: 'Orodha', report: 'Ripoti', analysis: 'Uchambuzi',
     center: 'Kituo', start: 'Anza', locating: 'Inatafuta', mins: 'dk'
   }
 };
@@ -367,7 +367,7 @@ export default function HomePage() {
     }
     eventLayerGroupRef.current.clearLayers();
 
-    // 1. 半透明警戒圓
+    // 1. 半透明警戒圓 (災害/危險)
     eventList.forEach((item) => {
       const displayTitle = getLocalizedEventTitle(item.eventType);
       if (item.eventType === 'natural_disaster' || item.eventType === 'unknown_danger') {
@@ -459,7 +459,6 @@ export default function HomePage() {
     return { type: 'unknown_danger', radius: 30 };
   };
 
-  // 🌟【關鍵修復 1】：安全拉取資料，失敗時靜默標記離線，不拋出 Failed to fetch
   const fetchAndProcessEvents = async (currentEvents: TrafficEvent[]) => {
     try {
       const res = await fetch('/api/mapinfo');
@@ -507,7 +506,6 @@ export default function HomePage() {
         planSafeNavigation(userLocationRef.current, navDestinationRef.current, resolvedEvents);
       }
     } catch {
-      // 斷網時靜默處理
       setIsOnline(false);
     }
   };
@@ -516,7 +514,6 @@ export default function HomePage() {
     fetchAndProcessEvents([]);
   }, []);
 
-  // 🌟【關鍵修復 2】：智慧同步佇列，連線中斷立即停止，不報錯且保護佇列
   const syncOfflineReports = async () => {
     if (typeof window === 'undefined' || isSyncingRef.current) return;
 
@@ -564,7 +561,6 @@ export default function HomePage() {
           remaining.push(item);
         }
       } catch {
-        // 🌟 只要遇到網路不通，立刻標記離線並將剩下尚未送出的所有項目全部保留
         setIsOnline(false);
         remaining.push(...queue.slice(i));
         break;
@@ -584,7 +580,6 @@ export default function HomePage() {
     isSyncingRef.current = false;
   };
 
-  // 定時輪詢與連線監聽
   useEffect(() => {
     syncOfflineReports();
 
@@ -698,9 +693,16 @@ export default function HomePage() {
     };
   }, [updateLocation, t.myLocation, t.destLocation]);
 
-  // 按鍵控制
+  // 按鍵控制（已加入 # 鍵導向安全分析頁面）
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 🌟 按 [#] 鍵前往安全分析頁面
+      if (e.key === '#') {
+        e.preventDefault();
+        router.push('/ai');
+        return;
+      }
+
       if (e.key === '8') {
         e.preventDefault();
         router.push('/list');
@@ -709,11 +711,6 @@ export default function HomePage() {
       if (e.key === '9') {
         e.preventDefault();
         router.push('/report');
-        return;
-      }
-      if (e.key === '#') {
-        e.preventDefault();
-        router.push('/ai');
         return;
       }
 
@@ -878,8 +875,20 @@ export default function HomePage() {
         {navStatus || t.navInit}
       </div>
 
+      {/* 底部操作與資訊區 */}
       <div style={{ flexShrink: 0, width: '220px', textAlign: 'center', marginTop: '2px' }}>
-        <div style={{ fontSize: '8px', color: '#374151', lineHeight: '1.2', whiteSpace: 'nowrap' }}>
+        {/* 6 大事件圖例 */}
+        <div style={{ 
+          fontSize: '8px', 
+          color: '#374151', 
+          lineHeight: '1.2', 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          flexWrap: 'nowrap', 
+          gap: '2px',
+          whiteSpace: 'nowrap'
+        }}>
           <span style={{ color: '#2563eb' }}>▬ {t.legendNav}</span> | 
           <span style={{ color: '#000000' }}>■ {t.legendCrash}</span> | 
           <span style={{ color: '#b91c1c' }}>■ {t.legendJam}</span> | 
@@ -888,11 +897,12 @@ export default function HomePage() {
           <span style={{ color: '#ca8a04' }}>● {t.evtDanger}</span>
         </div>
 
-        <div style={{ fontSize: '10px', color: '#374151', marginTop: '2px', lineHeight: '1.3' }}>
+        {/* 按鍵操作指引（已補上 [#] 安全分析） */}
+        <div style={{ fontSize: '9.5px', color: '#374151', marginTop: '2px', lineHeight: '1.3' }}>
           <p><strong>[2/4/5/6]</strong> {t.move} | <strong>[1/3]</strong> {t.zoom} | <strong>[0]</strong> {t.backStart}</p>
           <p style={{ color: '#16a34a' }}><strong>[*]</strong> {t.setDest}</p>
           <p style={{ color: '#dc2626', marginTop: '1px' }}>
-            <strong>[7]</strong> {t.locate} | <strong>[8]</strong> {t.list} | <strong>[9]</strong> {t.report}
+            <strong>[7]</strong> {t.locate} | <strong>[8]</strong> {t.list} | <strong>[9]</strong> {t.report} | <strong>[#]</strong> {t.analysis}
           </p>
         </div>
 

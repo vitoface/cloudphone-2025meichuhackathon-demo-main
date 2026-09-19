@@ -199,7 +199,6 @@ export default function HomePage() {
     }
   };
 
-  // 🚀 優化 1：極速距離算法 (Equirectangular approximation) 取代沉重的 Haversine，效能提升 400%
   const getDistanceMetersFast = (lat1: number, lng1: number, lat2: number, lng2: number) => {
     const R = 6371000;
     const x = (lng2 - lng1) * Math.PI / 180 * Math.cos((lat1 + lat2) / 2 * Math.PI / 180);
@@ -263,7 +262,6 @@ export default function HomePage() {
         currentEvents.forEach((ev) => {
           const hitRadius = (ev.radius || 30) + 10;
           const hasConflict = routeCoords.some(([rLat, rLng]) => {
-            // 使用效能優化版的距離函數
             return getDistanceMetersFast(rLat, rLng, ev.lat, ev.lng) <= hitRadius;
           });
 
@@ -311,13 +309,11 @@ export default function HomePage() {
     }
   }, [geoCoords]);
 
-  // 🚀 優化 2：將 OSRM 查詢從 5 射線降級為 3 射線，減輕 40% 的 API 與 DOM 渲染負擔
   const fetchMultiRayRoads = async (lat: number, lng: number, radiusMeters: number): Promise<[number, number][][]> => {
     const r = radiusMeters || 30;
     const latDelta = r / 111000;
     const lngDelta = r / (111000 * Math.cos((lat * Math.PI) / 180));
 
-    // 使用 3 個角度取代 5 個，維持貼路效果同時節省運算資源
     const angles = [0, 120, 240];
     const rayTasks = angles.map((deg) => {
       const rad = (deg * Math.PI) / 180;
@@ -496,11 +492,10 @@ export default function HomePage() {
         planSafeNavigation(userLocationRef.current, navDestinationRef.current, resolvedEvents);
       }
     } catch {
-      // 網路請求異常時靜默處理
+      // 靜默處理
     }
   };
 
-  // 🚀 優化 3：拉長背景輪詢時間，從 5 秒改為 15 秒，避免阻塞設備主執行緒
   useEffect(() => {
     fetchAndProcessEvents([]);
     const interval = setInterval(() => {
@@ -509,14 +504,13 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
-  // 預先載入相關頁面防延遲
   useEffect(() => {
     router.prefetch('/analysis');
     router.prefetch('/report');
     router.prefetch('/list');
   }, [router]);
 
-  // 初始化 Leaflet
+  // 🌟 初始化 Leaflet（全面針對 Cloud Phone 雲端架構加固）
   useEffect(() => {
     const mapContainer = mapContainerRef.current;
     if (!mapContainer) return;
@@ -555,9 +549,11 @@ export default function HomePage() {
           scrollWheelZoom: true,
         });
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // 🌟 核心關鍵：改用 CartoDB 輕量圖磚（不擋 CloudMosa 雲端機房 IP，加載快且對比度最高）
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
           maxZoom: 19,
-          attribution: '&copy; OpenStreetMap',
+          subdomains: 'abcd',
+          attribution: '&copy; OpenStreetMap &copy; CARTO',
         }).addTo(map);
 
         mapInstanceRef.current = map;
@@ -579,7 +575,6 @@ export default function HomePage() {
 
         drawLayers(eventsRef.current);
 
-        // 🚀 優化 4：防抖 (Debounce) 地圖移動與縮放事件，避免頻繁的 React State 更新與儲存操作卡死設備
         let moveTimeout: any;
         map.on('moveend', () => {
           clearTimeout(moveTimeout);
@@ -601,7 +596,9 @@ export default function HomePage() {
           }, 300);
         });
 
-        setTimeout(() => map.invalidateSize(), 150);
+        // 🌟 強制在 100ms 與 500ms 重繪一次尺寸，防止 Cloud Phone 虛擬 DOM 渲染空白
+        setTimeout(() => map.invalidateSize(), 100);
+        setTimeout(() => map.invalidateSize(), 500);
       }
     });
 
@@ -619,7 +616,7 @@ export default function HomePage() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === '#') {
         e.preventDefault();
-        router.push('/ai');
+        router.push('/analysis');
         return;
       }
       if (e.key === '8') {
@@ -742,16 +739,18 @@ export default function HomePage() {
         </h2>
       </div>
 
-      <div style={{ position: 'relative', width: '100%', maxWidth: '220px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+      {/* 🌟 地圖容器外層與高度防護：給予固定 145px 高度，杜絕 Cloud Phone 高度計算塌陷為 0 */}
+      <div style={{ position: 'relative', width: '220px', height: '145px', flexShrink: 0 }}>
         <div
           ref={mapContainerRef}
           style={{
             width: '100%',
-            flex: 1,
+            height: '100%',
             borderRadius: '6px',
             border: '1px solid #d1d5db',
             position: 'relative',
             overflow: 'hidden',
+            backgroundColor: '#e5e7eb', // 增加載入時的底色保護
             zIndex: 1,
           }}
         />
@@ -777,7 +776,6 @@ export default function HomePage() {
         {navStatus || t.navInit}
       </div>
 
-      {/* 底部操作與資訊區 */}
       <div style={{ flexShrink: 0, width: '220px', textAlign: 'center', marginTop: '2px' }}>
         <div style={{ 
           fontSize: '8px', 

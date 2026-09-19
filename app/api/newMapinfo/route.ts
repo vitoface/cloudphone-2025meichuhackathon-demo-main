@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
+const MAP_EVENTS = [
+  "car_crash",
+  "traffic_jam",
+  "roadwork",
+  "unknown_danger",
+  "natural_disaster",
+] as const;
+
+type MapEvent = (typeof MAP_EVENTS)[number];
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -10,6 +20,7 @@ export async function POST(request: Request) {
       latitude,
       title,
       description,
+      events,
     } = body;
 
     // 基本資料檢查
@@ -62,6 +73,20 @@ export async function POST(request: Request) {
       );
     }
 
+    if (
+      events !== undefined &&
+      events !== null &&
+      !MAP_EVENTS.includes(events as MapEvent)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `events must be one of: ${MAP_EVENTS.join(", ")}`,
+        },
+        { status: 400 }
+      );
+    }
+
     const { data, error } = await supabase
       .from("MapInfo")
       .insert({
@@ -69,6 +94,7 @@ export async function POST(request: Request) {
         latitude: lat,
         title,
         description: description ?? null,
+        events: events ?? null,
       })
       .select()
       .single();

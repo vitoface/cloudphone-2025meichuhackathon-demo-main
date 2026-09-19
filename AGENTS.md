@@ -47,6 +47,8 @@ Target resolutions include:
 - QVGA: `240 × 320`
 - QQVGA: `160 × 120`
 
+All the operation should be done by number button, arrow key, sharp, asterisk
+
 All frontend changes should consider these display constraints.
 
 ---
@@ -228,8 +230,20 @@ Expected request data:
   "longtitude": 120.123456,
   "latitude": 24.123456,
   "title": "Example title",
-  "description": "Example description"
+  "description": "Example description",
+  "events": "traffic_jam"
 }
+```
+
+`events` is optional for backward compatibility. When provided, it must be one
+of:
+
+```text
+car_crash
+traffic_jam
+roadwork
+unknown_danger
+natural_disaster
 ```
 
 The API should:
@@ -296,7 +310,13 @@ longtitude
 latitude
 title
 description
+events
 ```
+
+The `events` column uses the PostgreSQL enum type `map_event` and is nullable
+for compatibility with existing records and older API clients. Do not add new
+event values in application code without updating the database enum and this
+document at the same time.
 
 ### Important Naming Constraint
 
@@ -371,6 +391,7 @@ export interface MapInfo {
   latitude: number;
   title: string;
   description: string | null;
+  events: "car_crash" | "traffic_jam" | "roadwork" | "unknown_danger" | "natural_disaster" | null;
 }
 ```
 

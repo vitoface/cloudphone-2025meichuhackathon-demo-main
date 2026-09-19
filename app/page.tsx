@@ -545,6 +545,7 @@ export default function HomePage() {
   };
 
   const syncOfflineReports = async () => {
+    console.log('[HomePage] syncOfflineReports');
     if (typeof window === 'undefined' || isSyncingRef.current) return;
 
     const raw = localStorage.getItem('offline_reports');
@@ -611,19 +612,25 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    console.log('[HomePage] useEffect: startEventPollingAndOfflineSync');
     fetchAndProcessEvents([]);
     syncOfflineReports();
 
     const interval = setInterval(() => {
+      console.log('[HomePage] interval: refreshEventsAndOfflineReports');
       fetchAndProcessEvents(eventsRef.current);
       syncOfflineReports();
     }, 4000);
 
     const handleOnline = () => {
+      console.log('[HomePage] handleOnline');
       setIsOnline(true);
       syncOfflineReports();
     };
-    const handleOffline = () => setIsOnline(false);
+    const handleOffline = () => {
+      console.log('[HomePage] handleOffline');
+      setIsOnline(false);
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -636,6 +643,7 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    console.log('[HomePage] useEffect: prefetchRoutes');
     router.prefetch('/analysis');
     router.prefetch('/report');
     router.prefetch('/list');
@@ -643,6 +651,7 @@ export default function HomePage() {
 
   // 初始化 Leaflet
   useEffect(() => {
+    console.log('[HomePage] useEffect: initializeLeaflet');
 
     const mapContainer = mapContainerRef.current;
     if (!mapContainer) return;
@@ -650,6 +659,7 @@ export default function HomePage() {
     let isMounted = true;
 
     import('leaflet').then((L) => {
+      console.log('[HomePage] initializeLeaflet: moduleLoaded');
       if (!isMounted) return;
       leafletRef.current = L;
 
@@ -661,6 +671,7 @@ export default function HomePage() {
       });
 
       if (!mapInstanceRef.current) {
+        console.log('[HomePage] initializeLeaflet: createMap');
         const savedLat = sessionStorage.getItem('map_last_lat');
         const savedLng = sessionStorage.getItem('map_last_lng');
         const savedZoom = sessionStorage.getItem('map_last_zoom');
@@ -737,6 +748,7 @@ export default function HomePage() {
     });
 
     return () => {
+      console.log('[HomePage] useEffect cleanup: initializeLeaflet');
       isMounted = false;
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
@@ -747,7 +759,9 @@ export default function HomePage() {
 
   // 按鍵控制
   useEffect(() => {
+    console.log('[HomePage] useEffect: registerKeyboardControls');
     const handleKeyDown = (e: KeyboardEvent) => {
+      console.log('[HomePage] handleKeyDown', { key: e.key });
       if (e.key === '#') {
         e.preventDefault();
         router.push('/analysis');

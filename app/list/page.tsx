@@ -144,6 +144,7 @@ export default function ListPage() {
 
   return (
     <main
+      ref={scrollRef}
       style={{
         width: '240px',           // 嚴格限制寬度符合手機螢幕
         height: '320px',          // 嚴格限制高度
@@ -161,7 +162,7 @@ export default function ListPage() {
         周遭路況列表
       </h2>
       <div style={{ fontSize: '10px', color: '#6b7280', marginBottom: '12px' }}>
-        按 [0] 返回地圖
+        [2]上滑 [5]下滑 | [0]返回
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>

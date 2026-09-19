@@ -1,0 +1,52 @@
+****首頁 (page.tsx) 的引入方式調整****
+// page.tsx (或 app/page.tsx)
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+
+// 🌟 修改這裡：路徑改為 @/component/useGeolocation
+import { useGeolocation } from '@/component/useGeolocation'; 
+
+export default function HomePage() {
+  const router = useRouter();
+  
+  // 開啟持續追蹤，預設會自動抓取
+  const { location, errorMsg, loading, fetchLocation } = useGeolocation({ watch: true });
+  
+  const [currentZoom, setCurrentZoom] = useState<number>(15);
+  
+  // ... (下方的 Leaflet 地圖與按鍵監聽程式碼皆維持原樣，不需要修改)
+
+****回報頁面 (report/page.tsx) 的引入方式調整****
+// app/report/page.tsx
+'use client';
+import { useState } from 'react';
+
+// 🌟 修改這裡：路徑改為 @/component/useGeolocation
+import { useGeolocation } from '@/component/useGeolocation';
+
+export default function ReportPage() {
+  // 關閉持續追蹤與自動抓取，省電且符合當下情境
+  const { fetchLocation, loading, errorMsg } = useGeolocation({ watch: false, autoFetch: false });
+  const [description, setDescription] = useState('');
+
+  const handleSubmit = async () => {
+    try {
+      // 按下按鈕的瞬間，觸發 GPS 抓取並等待結果
+      const currentCoords = await fetchLocation(); 
+
+      const reportData = {
+        lat: currentCoords.lat,
+        lng: currentCoords.lng,
+        desc: description,
+      };
+
+      console.log("準備送出回報資料：", reportData);
+      alert('回報成功！');
+    } catch (err) {
+      console.error("無法取得定位，請重試");
+    }
+  };
+
+  // ... (下方的畫面渲染程式碼皆維持原樣)

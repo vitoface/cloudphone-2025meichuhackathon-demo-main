@@ -139,10 +139,6 @@ export default function HomePage() {
   const router = useRouter();
   const [langCode, setLangCode] = useState<string>('zh');
 
-  const [isOnline, setIsOnline] = useState<boolean>(true);
-  const [pendingSyncCount, setPendingSyncCount] = useState<number>(0);
-  const isSyncingRef = useRef<boolean>(false);
-
   const { 
     location: geoCoords, 
     loading: geoLoading, 
@@ -188,7 +184,6 @@ export default function HomePage() {
       } else {
         setLangCode('en');
       }
-      setIsOnline(navigator.onLine);
     }
   }, []);
 
@@ -374,8 +369,8 @@ export default function HomePage() {
         const color = item.eventType === 'natural_disaster' ? '#7c3aed' : '#ca8a04';
         L.circle([item.lat, item.lng], {
           color,
-          fillColor: color,
           fillOpacity: 0.5,
+          fillColor: color,
           radius: item.radius || 30,
           weight: 2.5,
         }).bindPopup(`<b>${displayTitle}</b><br/>${item.description || ''}`).addTo(eventLayerGroupRef.current);
@@ -465,7 +460,6 @@ export default function HomePage() {
       if (!res.ok) return;
 
       const apiData: ApiMapInfoItem[] = await res.json();
-      setIsOnline(true);
       setCloudReports(apiData);
 
       const mappedEvents: TrafficEvent[] = apiData.map((item, idx) => {
@@ -506,102 +500,16 @@ export default function HomePage() {
         planSafeNavigation(userLocationRef.current, navDestinationRef.current, resolvedEvents);
       }
     } catch {
-      setIsOnline(false);
+      // 網路請求異常時靜默處理
     }
   };
 
   useEffect(() => {
     fetchAndProcessEvents([]);
-  }, []);
-
-  const syncOfflineReports = async () => {
-    if (typeof window === 'undefined' || isSyncingRef.current) return;
-
-    const raw = localStorage.getItem('offline_reports');
-    if (!raw) {
-      setPendingSyncCount(0);
-      return;
-    }
-
-    let queue: any[] = [];
-    try {
-      queue = JSON.parse(raw);
-    } catch {
-      return;
-    }
-
-    if (!Array.isArray(queue) || queue.length === 0) {
-      setPendingSyncCount(0);
-      return;
-    }
-
-    setPendingSyncCount(queue.length);
-
-    isSyncingRef.current = true;
-    const remaining: any[] = [];
-
-    for (let i = 0; i < queue.length; i++) {
-      const item = queue[i];
-      try {
-        const payload = {
-          longtitude: item.longtitude,
-          latitude: item.latitude,
-          title: item.title,
-          description: item.description || '離線自動補送回報',
-          events: item.events,
-        };
-
-        const res = await fetch('/api/newMapinfo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-          remaining.push(item);
-        }
-      } catch {
-        setIsOnline(false);
-        remaining.push(...queue.slice(i));
-        break;
-      }
-    }
-
-    if (remaining.length === 0) {
-      localStorage.removeItem('offline_reports');
-      setPendingSyncCount(0);
-      setIsOnline(true);
-      fetchAndProcessEvents(eventsRef.current);
-    } else {
-      localStorage.setItem('offline_reports', JSON.stringify(remaining));
-      setPendingSyncCount(remaining.length);
-    }
-
-    isSyncingRef.current = false;
-  };
-
-  useEffect(() => {
-    syncOfflineReports();
-
     const interval = setInterval(() => {
       fetchAndProcessEvents(eventsRef.current);
-      syncOfflineReports();
-    }, 4000);
-
-    const handleOnline = () => {
-      setIsOnline(true);
-      syncOfflineReports();
-    };
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   // 初始化 Leaflet
@@ -693,10 +601,10 @@ export default function HomePage() {
     };
   }, [updateLocation, t.myLocation, t.destLocation]);
 
-  // 按鍵控制（已加入 # 鍵導向安全分析頁面）
+  // 按鍵控制
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // 🌟 按 [#] 鍵前往安全分析頁面
+      // 按 [#] 鍵前往安全分析頁面
       if (e.key === '#') {
         e.preventDefault();
         router.push('/ai');
@@ -821,23 +729,6 @@ export default function HomePage() {
         >
           {t.title}
         </h2>
-
-        {(!isOnline || pendingSyncCount > 0) && (
-          <div
-            style={{
-              fontSize: '9px',
-              backgroundColor: isOnline ? '#fef3c7' : '#fee2e2',
-              color: isOnline ? '#92400e' : '#991b1b',
-              padding: '1px 4px',
-              borderRadius: '3px',
-              fontWeight: 'bold',
-              marginBottom: '2px',
-              border: `1px solid ${isOnline ? '#fcd34d' : '#fca5a5'}`
-            }}
-          >
-            {!isOnline ? `⚠️ 離線狀態 (待同步: ${pendingSyncCount})` : `🔄 連線恢復：自動同步中 (${pendingSyncCount})`}
-          </div>
-        )}
       </div>
 
       <div style={{ position: 'relative', width: '100%', maxWidth: '220px', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -897,7 +788,7 @@ export default function HomePage() {
           <span style={{ color: '#ca8a04' }}>● {t.evtDanger}</span>
         </div>
 
-        {/* 按鍵操作指引（已補上 [#] 安全分析） */}
+        {/* 按鍵操作指引 */}
         <div style={{ fontSize: '9.5px', color: '#374151', marginTop: '2px', lineHeight: '1.3' }}>
           <p><strong>[2/4/5/6]</strong> {t.move} | <strong>[1/3]</strong> {t.zoom} | <strong>[0]</strong> {t.backStart}</p>
           <p style={{ color: '#16a34a' }}><strong>[*]</strong> {t.setDest}</p>

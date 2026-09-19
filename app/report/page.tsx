@@ -14,12 +14,11 @@ const translations = {
     defaultStatus: '請使用上下鍵選擇，按 Enter 回報',
     cooldownStatus: (sec: number) => `⏳ 冷卻中... 請等待 ${sec} 秒`,
     sendingStatus: '定位並傳送中，請稍候...',
-    offlineStatus: '📦 離線狀態：回報已暫存，恢復連線時同步！',
     noCoordsError: '無法取得座標',
     successStatus: (title: string) => `回報成功！已記錄：${title}`,
     failStatus: (err: string) => `回報失敗: ${err}`,
     serverError: '伺服器錯誤',
-    networkError: '網路或定位失敗，已為您本機暫存。',
+    networkError: '網路或定位失敗，請稍後再試。',
     gpsLocating: 'GPS 定位中...',
     move: '移動', send: '送出', cancelBack: '取消返回'
   },
@@ -29,12 +28,11 @@ const translations = {
     defaultStatus: 'Use Up/Down to select, Enter to report',
     cooldownStatus: (sec: number) => `⏳ Cooldown... wait ${sec}s`,
     sendingStatus: 'Locating and sending...',
-    offlineStatus: '📦 Offline: Report saved locally, will sync later!',
     noCoordsError: 'Unable to get coordinates',
     successStatus: (title: string) => `Success! Recorded: ${title}`,
     failStatus: (err: string) => `Failed: ${err}`,
     serverError: 'Server error',
-    networkError: 'Network/GPS failed, saved locally.',
+    networkError: 'Network/GPS failed, try again.',
     gpsLocating: 'Locating GPS...',
     move: 'Move', send: 'Send', cancelBack: 'Cancel & Back'
   },
@@ -44,12 +42,11 @@ const translations = {
     defaultStatus: 'استخدم أعلى/أسفل للتحديد، و Enter للإبلاغ',
     cooldownStatus: (sec: number) => `⏳ تبريد... انتظر ${sec} ثانية`,
     sendingStatus: 'جاري التحديد والإرسال...',
-    offlineStatus: '📦 وضع عدم الاتصال: تم الحفظ، ستتم المزامنة لاحقاً!',
     noCoordsError: 'تعذر الحصول على الإحداثيات',
     successStatus: (title: string) => `نجاح! تم تسجيل: ${title}`,
     failStatus: (err: string) => `فشل: ${err}`,
     serverError: 'خطأ في الخادم',
-    networkError: 'فشل الشبكة/الموقع، تم الحفظ محلياً.',
+    networkError: 'فشل الشبكة/الموقع، أعد المحاولة.',
     gpsLocating: 'جاري تحديد GPS...',
     move: 'تحريك', send: 'إرسال', cancelBack: 'إلغاء ورجوع'
   },
@@ -59,12 +56,11 @@ const translations = {
     defaultStatus: 'Haut/Bas pour choisir, Entrée pour signaler',
     cooldownStatus: (sec: number) => `⏳ Attente... patientez ${sec}s`,
     sendingStatus: 'Localisation et envoi...',
-    offlineStatus: '📦 Hors ligne : Enregistré localement, sera synchronisé !',
     noCoordsError: 'Coordonnées introuvables',
     successStatus: (title: string) => `Succès ! Enregistré : ${title}`,
     failStatus: (err: string) => `Échec : ${err}`,
     serverError: 'Erreur serveur',
-    networkError: 'Échec réseau/GPS, sauvegardé localement.',
+    networkError: 'Échec réseau/GPS, réessayez.',
     gpsLocating: 'Localisation GPS...',
     move: 'Déplacer', send: 'Envoyer', cancelBack: 'Annuler & Retour'
   },
@@ -74,12 +70,11 @@ const translations = {
     defaultStatus: 'Cima/Baixo para selecionar, Enter para relatar',
     cooldownStatus: (sec: number) => `⏳ Tempo de espera... ${sec}s`,
     sendingStatus: 'Localizando e enviando...',
-    offlineStatus: '📦 Offline: Salvo localmente, será sincronizado!',
     noCoordsError: 'Não foi possível obter coordenadas',
     successStatus: (title: string) => `Sucesso! Registrado: ${title}`,
     failStatus: (err: string) => `Falha: ${err}`,
     serverError: 'Erro no servidor',
-    networkError: 'Falha de rede/GPS, salvo localmente.',
+    networkError: 'Falha de rede/GPS, tente novamente.',
     gpsLocating: 'Localizando GPS...',
     move: 'Mover', send: 'Enviar', cancelBack: 'Cancelar e Voltar'
   },
@@ -89,12 +84,11 @@ const translations = {
     defaultStatus: 'Dùng Lên/Xuống để chọn, Enter để báo cáo',
     cooldownStatus: (sec: number) => `⏳ Đang chờ... đợi ${sec}s`,
     sendingStatus: 'Đang định vị và gửi...',
-    offlineStatus: '📦 Ngoại tuyến: Đã lưu cục bộ, sẽ đồng bộ sau!',
     noCoordsError: 'Không thể lấy tọa độ',
     successStatus: (title: string) => `Thành công! Đã lưu: ${title}`,
     failStatus: (err: string) => `Lỗi: ${err}`,
     serverError: 'Lỗi máy chủ',
-    networkError: 'Lỗi mạng/GPS, đã lưu trên máy.',
+    networkError: 'Lỗi mạng/GPS, thử lại sau.',
     gpsLocating: 'Đang định vị GPS...',
     move: 'Di chuyển', send: 'Gửi', cancelBack: 'Hủy & Quay lại'
   },
@@ -104,12 +98,11 @@ const translations = {
     defaultStatus: 'Yi amfani da Sama/Ƙasa, danna Enter',
     cooldownStatus: (sec: number) => `⏳ Jira kadan... sakan ${sec}`,
     sendingStatus: 'Nemo wuri da aikawa...',
-    offlineStatus: '📦 Ba intanet: An adana a waya, za a aika daga baya!',
     noCoordsError: 'Ba a iya samun wuri ba',
     successStatus: (title: string) => `Yayi! An yi rikodin: ${title}`,
     failStatus: (err: string) => `Ya gaza: ${err}`,
     serverError: 'Matsalar sabar',
-    networkError: 'Matsalar intanet/GPS, an adana.',
+    networkError: 'Matsalar intanet/GPS, sake gwadawa.',
     gpsLocating: 'Nemo GPS...',
     move: 'Matsa', send: 'Aika', cancelBack: 'Soke & Koma'
   },
@@ -119,12 +112,11 @@ const translations = {
     defaultStatus: 'Tumia Juu/Chini kuchagua, Enter kuripoti',
     cooldownStatus: (sec: number) => `⏳ Tulia... subiri sekunde ${sec}`,
     sendingStatus: 'Inatafuta na kutuma...',
-    offlineStatus: '📦 Nje ya mtandao: Imehifadhiwa, itasawazishwa baadaye!',
     noCoordsError: 'Imeshindwa kupata kuratibu',
     successStatus: (title: string) => `Imefanikiwa! Imerekodiwa: ${title}`,
     failStatus: (err: string) => `Imeshindwa: ${err}`,
     serverError: 'Hitilafu ya seva',
-    networkError: 'Mtandao/GPS imeshindwa, imehifadhiwa.',
+    networkError: 'Mtandao/GPS imeshindwa, jaribu tena.',
     gpsLocating: 'Inatafuta GPS...',
     move: 'Sogeza', send: 'Tuma', cancelBack: 'Ghairi & Rudi'
   }
@@ -141,7 +133,7 @@ export default function ReportPage() {
   const [isReporting, setIsReporting] = useState(false);
   
   const [status, setStatus] = useState<{
-    type: 'default' | 'cooldown' | 'sending' | 'offline_saved' | 'success' | 'fail' | 'network_error';
+    type: 'default' | 'cooldown' | 'sending' | 'success' | 'fail' | 'network_error';
     payload?: string | number;
   }>({ type: 'default' });
 
@@ -173,7 +165,6 @@ export default function ReportPage() {
   let displayMessage = t.defaultStatus;
   if (status.type === 'cooldown') displayMessage = t.cooldownStatus(status.payload as number);
   else if (status.type === 'sending') displayMessage = t.sendingStatus;
-  else if (status.type === 'offline_saved') displayMessage = t.offlineStatus;
   else if (status.type === 'success') displayMessage = t.successStatus(status.payload as string);
   else if (status.type === 'fail') {
     const errText = status.payload === 'serverError' ? t.serverError : (status.payload as string);
@@ -190,22 +181,11 @@ export default function ReportPage() {
     }
   }, [selectedIndex]);
 
-  const saveToOfflineQueue = useCallback((payload: any) => {
-    try {
-      const raw = localStorage.getItem('offline_reports');
-      const queue = raw ? JSON.parse(raw) : [];
-      queue.push(payload);
-      localStorage.setItem('offline_reports', JSON.stringify(queue));
-      localStorage.setItem('my_last_report_time', Date.now().toString());
-    } catch (e) {
-      console.error('寫入 offline_reports 失敗:', e);
-    }
-  }, []);
-
-  // 🌟 使用 useCallback 穩固依賴，並強制 description 使用固定系統字串
+  // 送出回報邏輯
   const handleReport = useCallback(async (option: { title: string, event: string }) => {
     if (isReporting || loading) return;
 
+    // 30 秒防刷冷卻
     const COOLDOWN_SECONDS = 30;
     const lastReportStr = localStorage.getItem('my_last_report_time');
     
@@ -246,19 +226,10 @@ export default function ReportPage() {
       longtitude: lng,
       latitude: lat,
       title: option.title,
-      description: '透過實體按鍵手機回報', // 🌟 強制寫死系統固定字串，不進行多國語言轉換
+      description: '透過實體按鍵手機回報',
       events: option.event,
       created_at: new Date().toISOString(),
     };
-
-    if (typeof window !== 'undefined' && !navigator.onLine) {
-      saveToOfflineQueue(reportPayload);
-      setStatus({ type: 'offline_saved' });
-      setTimeout(() => {
-        router.push('/');
-      }, 1500);
-      return;
-    }
 
     try {
       const response = await fetch('/api/newMapinfo', {
@@ -276,21 +247,17 @@ export default function ReportPage() {
           router.push('/');
         }, 1500);
       } else {
-        saveToOfflineQueue(reportPayload);
-        setStatus({ type: 'offline_saved' });
-        setTimeout(() => {
-          router.push('/');
-        }, 1500);
+        setStatus({ type: 'fail', payload: result.error || 'serverError' });
+        setIsReporting(false);
+        setTimeout(() => setStatus({ type: 'default' }), 3000);
       }
     } catch (error) {
-      console.warn('API 呼叫失敗，自動轉入離線佇列:', error);
-      saveToOfflineQueue(reportPayload);
-      setStatus({ type: 'offline_saved' });
-      setTimeout(() => {
-        router.push('/');
-      }, 1500);
+      console.error('回報送出失敗:', error);
+      setStatus({ type: 'network_error' });
+      setIsReporting(false);
+      setTimeout(() => setStatus({ type: 'default' }), 3000);
     }
-  }, [isReporting, loading, router, fetchLocation, saveToOfflineQueue]);
+  }, [isReporting, loading, router, fetchLocation]);
 
   const handleCancel = () => {
     router.push('/');
@@ -359,7 +326,7 @@ export default function ReportPage() {
           aria-live="polite" 
           style={{ 
             fontSize: '11px', 
-            color: (isReporting || loading || status.type === 'cooldown' || status.type === 'offline_saved') ? '#2563eb' : '#dc2626', 
+            color: (isReporting || loading || status.type === 'cooldown') ? '#2563eb' : '#dc2626', 
             marginBottom: '6px', 
             fontWeight: 'bold' 
           }}

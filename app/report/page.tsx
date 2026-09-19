@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGeolocation } from '@/component/useGeolocation';
 
@@ -16,7 +16,6 @@ const translations = {
     sendingStatus: '定位並傳送中，請稍候...',
     offlineStatus: '📦 離線狀態：回報已暫存，恢復連線時同步！',
     noCoordsError: '無法取得座標',
-    reportDesc: '透過實體按鍵手機回報',
     successStatus: (title: string) => `回報成功！已記錄：${title}`,
     failStatus: (err: string) => `回報失敗: ${err}`,
     serverError: '伺服器錯誤',
@@ -32,7 +31,6 @@ const translations = {
     sendingStatus: 'Locating and sending...',
     offlineStatus: '📦 Offline: Report saved locally, will sync later!',
     noCoordsError: 'Unable to get coordinates',
-    reportDesc: 'Reported via physical keypad phone',
     successStatus: (title: string) => `Success! Recorded: ${title}`,
     failStatus: (err: string) => `Failed: ${err}`,
     serverError: 'Server error',
@@ -48,7 +46,6 @@ const translations = {
     sendingStatus: 'جاري التحديد والإرسال...',
     offlineStatus: '📦 وضع عدم الاتصال: تم الحفظ، ستتم المزامنة لاحقاً!',
     noCoordsError: 'تعذر الحصول على الإحداثيات',
-    reportDesc: 'تم الإبلاغ عبر هاتف بلوحة مفاتيح',
     successStatus: (title: string) => `نجاح! تم تسجيل: ${title}`,
     failStatus: (err: string) => `فشل: ${err}`,
     serverError: 'خطأ في الخادم',
@@ -64,7 +61,6 @@ const translations = {
     sendingStatus: 'Localisation et envoi...',
     offlineStatus: '📦 Hors ligne : Enregistré localement, sera synchronisé !',
     noCoordsError: 'Coordonnées introuvables',
-    reportDesc: 'Signalé via téléphone à clavier',
     successStatus: (title: string) => `Succès ! Enregistré : ${title}`,
     failStatus: (err: string) => `Échec : ${err}`,
     serverError: 'Erreur serveur',
@@ -80,7 +76,6 @@ const translations = {
     sendingStatus: 'Localizando e enviando...',
     offlineStatus: '📦 Offline: Salvo localmente, será sincronizado!',
     noCoordsError: 'Não foi possível obter coordenadas',
-    reportDesc: 'Relatado via telefone de teclado',
     successStatus: (title: string) => `Sucesso! Registrado: ${title}`,
     failStatus: (err: string) => `Falha: ${err}`,
     serverError: 'Erro no servidor',
@@ -96,7 +91,6 @@ const translations = {
     sendingStatus: 'Đang định vị và gửi...',
     offlineStatus: '📦 Ngoại tuyến: Đã lưu cục bộ, sẽ đồng bộ sau!',
     noCoordsError: 'Không thể lấy tọa độ',
-    reportDesc: 'Báo cáo qua điện thoại phím cứng',
     successStatus: (title: string) => `Thành công! Đã lưu: ${title}`,
     failStatus: (err: string) => `Lỗi: ${err}`,
     serverError: 'Lỗi máy chủ',
@@ -112,7 +106,6 @@ const translations = {
     sendingStatus: 'Nemo wuri da aikawa...',
     offlineStatus: '📦 Ba intanet: An adana a waya, za a aika daga baya!',
     noCoordsError: 'Ba a iya samun wuri ba',
-    reportDesc: 'An kawo rahoto ta wayar maballin',
     successStatus: (title: string) => `Yayi! An yi rikodin: ${title}`,
     failStatus: (err: string) => `Ya gaza: ${err}`,
     serverError: 'Matsalar sabar',
@@ -128,7 +121,6 @@ const translations = {
     sendingStatus: 'Inatafuta na kutuma...',
     offlineStatus: '📦 Nje ya mtandao: Imehifadhiwa, itasawazishwa baadaye!',
     noCoordsError: 'Imeshindwa kupata kuratibu',
-    reportDesc: 'Imeripotiwa kupitia simu ya vitufe',
     successStatus: (title: string) => `Imefanikiwa! Imerekodiwa: ${title}`,
     failStatus: (err: string) => `Imeshindwa: ${err}`,
     serverError: 'Hitilafu ya seva',
@@ -153,7 +145,6 @@ export default function ReportPage() {
     payload?: string | number;
   }>({ type: 'default' });
 
-  // 🌟 修改 Ref 型別以支援原生的 button
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
@@ -171,7 +162,6 @@ export default function ReportPage() {
 
   const t = translations[langCode as keyof typeof translations] || translations['en'];
 
-  // 🌟 使用 useMemo 快取選項陣列，避免觸發 useEffect 的無限迴圈渲染
   const currentOptions = useMemo(() => [
     { title: t.titleCrash, event: 'car_crash' },
     { title: t.titleJam, event: 'traffic_jam' },
@@ -200,8 +190,7 @@ export default function ReportPage() {
     }
   }, [selectedIndex]);
 
-  // 可靠地寫入離線暫存
-  const saveToOfflineQueue = (payload: any) => {
+  const saveToOfflineQueue = useCallback((payload: any) => {
     try {
       const raw = localStorage.getItem('offline_reports');
       const queue = raw ? JSON.parse(raw) : [];
@@ -211,13 +200,12 @@ export default function ReportPage() {
     } catch (e) {
       console.error('寫入 offline_reports 失敗:', e);
     }
-  };
+  }, []);
 
-  // 處理送出回報的邏輯
-  const handleReport = async (option: { title: string, event: string }) => {
+  // 🌟 使用 useCallback 穩固依賴，並強制 description 使用固定系統字串
+  const handleReport = useCallback(async (option: { title: string, event: string }) => {
     if (isReporting || loading) return;
 
-    // 30 秒回報冷卻機制
     const COOLDOWN_SECONDS = 30;
     const lastReportStr = localStorage.getItem('my_last_report_time');
     
@@ -236,7 +224,6 @@ export default function ReportPage() {
     setIsReporting(true);
     setStatus({ type: 'sending' });
 
-    // 優先取得座標
     let lat = 24.7936;
     let lng = 120.9917;
 
@@ -259,12 +246,11 @@ export default function ReportPage() {
       longtitude: lng,
       latitude: lat,
       title: option.title,
-      description: t.reportDesc,
+      description: '透過實體按鍵手機回報', // 🌟 強制寫死系統固定字串，不進行多國語言轉換
       events: option.event,
       created_at: new Date().toISOString(),
     };
 
-    // 情況 A：無網路狀態
     if (typeof window !== 'undefined' && !navigator.onLine) {
       saveToOfflineQueue(reportPayload);
       setStatus({ type: 'offline_saved' });
@@ -274,7 +260,6 @@ export default function ReportPage() {
       return;
     }
 
-    // 情況 B：連線正常打 API
     try {
       const response = await fetch('/api/newMapinfo', {
         method: 'POST',
@@ -298,7 +283,6 @@ export default function ReportPage() {
         }, 1500);
       }
     } catch (error) {
-      // 情況 C：API 請求途中連線中斷
       console.warn('API 呼叫失敗，自動轉入離線佇列:', error);
       saveToOfflineQueue(reportPayload);
       setStatus({ type: 'offline_saved' });
@@ -306,13 +290,12 @@ export default function ReportPage() {
         router.push('/');
       }, 1500);
     }
-  };
+  }, [isReporting, loading, router, fetchLocation, saveToOfflineQueue]);
 
   const handleCancel = () => {
     router.push('/');
   };
 
-  // 監聽實體按鍵
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (isReporting || loading) return;
@@ -345,7 +328,7 @@ export default function ReportPage() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedIndex, isReporting, loading, router, currentOptions]);
+  }, [selectedIndex, isReporting, loading, currentOptions, handleReport]);
 
   return (
     <main
@@ -368,7 +351,6 @@ export default function ReportPage() {
       }}
     >
       <div style={{ flexShrink: 0, textAlign: 'center', width: '100%' }}>
-        {/* 🌟 加上 tabIndex 讓頂部標題與狀態也能被 KingVoice 朗讀 */}
         <h2 tabIndex={0} style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '2px', color: '#000000' }}>
           {t.pageTitle}
         </h2>
@@ -406,7 +388,6 @@ export default function ReportPage() {
         {currentOptions.map((opt, index) => {
           const isSelected = index === selectedIndex;
           return (
-            // 🌟 更換為原生的 button 標籤
             <button
               key={opt.event}
               ref={(el) => { itemRefs.current[index] = el; }}
@@ -454,7 +435,6 @@ export default function ReportPage() {
           <span><strong>[↑/2] [↓/5]</strong> {t.move} | <strong>[Enter]</strong> {t.send}</span>
         </div>
 
-        {/* 🌟 更換為原生的 button 標籤 */}
         <button
           onClick={handleCancel}
           tabIndex={0}

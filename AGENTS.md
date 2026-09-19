@@ -213,7 +213,19 @@ Expected responsibilities:
 
 - Read marker information from Supabase.
 - Return map marker data as JSON.
+- Optionally filter nearby markers with `longtitude` and/or `latitude` query
+  parameters.
+- Treat "nearby" as within `0.01` degrees of each valid supplied coordinate.
+- If either supplied coordinate is empty, non-numeric, or outside its valid
+  range, ignore all coordinate filters and return every marker.
 - Handle database errors.
+
+Examples:
+
+```text
+GET /api/mapinfo?longtitude=120.123456&latitude=24.123456
+GET /api/mapinfo?latitude=24.123456
+```
 
 ---
 

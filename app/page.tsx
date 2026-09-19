@@ -755,7 +755,7 @@ export default function HomePage() {
       console.log('[HomePage] handleKeyDown', { key: e.key });
       if (e.key === '#') {
         e.preventDefault();
-        router.push('/analysis');
+        router.push('/ai');
         return;
       }
       if (e.key === '8') {

@@ -2,172 +2,164 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGeolocation } from '@/component/useGeolocation';
 
-// 定義後端支援的事件清單與顯示標題
-const REPORT_OPTIONS = [
-  { title: '發生車禍', event: 'car_crash' },
-  { title: '嚴重塞車', event: 'traffic_jam' },
-  { title: '道路施工', event: 'roadwork' },
-  { title: '不明危險', event: 'unknown_danger' },
-  { title: '自然災害', event: 'natural_disaster' },
-];
+// 🌟 路徑改為 @/component/useGeolocation
+import { useGeolocation } from '@/component/useGeolocation'; 
 
-export default function ReportPage() {
+interface MapInfoItem {
+  id: string | number;
+  created_at: string;
+  events: string | null;
+  latitude: number;
+  longtitude: number;
+  description?: string;
+}
+
+const EVENT_CONFIG: Record<
+  string,
+  { label: string; prefix: string; color: string }
+> = {
+  car_crash: { label: '發生車禍', prefix: '[嚴重]', color: '#dc2626' },
+  traffic_jam: { label: '嚴重塞車', prefix: '[提醒]', color: '#ea580c' },
+  roadwork: { label: '道路施工', prefix: '[注意]', color: '#d97706' },
+  unknown_danger: { label: '不明危險', prefix: '[危險]', color: '#e11d48' },
+  natural_disaster: { label: '天災路況', prefix: '[警戒]', color: '#7c3aed' },
+};
+
+function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function formatDistance(distanceKm: number): string {
+  if (distanceKm < 1) {
+    return `距離 ${Math.round(distanceKm * 1000)}m`;
+  }
+  return `距離 ${distanceKm.toFixed(1)}km`;
+}
+
+export default function ListPage() {
   const router = useRouter();
-  const { fetchLocation, loading, errorMsg } = useGeolocation({ watch: false, autoFetch: false });
+  const [events, setEvents] = useState<(MapInfoItem & { distance?: number })[]>([]);
+  const [apiLoading, setApiLoading] = useState(true);
+  
+  // 用於綁定中間的列表容器，以程式化方式控制捲動
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const [selectedIndex, setSelectedIndex] = useState<number>(0);
-  const [statusMessage, setStatusMessage] = useState('請使用上下鍵選擇，按 Enter 回報');
-  const [isReporting, setIsReporting] = useState(false);
+  const { location, errorMsg, loading: geoLoading } = useGeolocation({ autoFetch: true });
 
-  // 用來追蹤每一個選項的 DOM 元素，以便自動捲動
-  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  // 🌟 當選中的索引改變時，自動將該項目捲動到可視範圍內
-  useEffect(() => {
-    if (itemRefs.current[selectedIndex]) {
-      itemRefs.current[selectedIndex]?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest', 
-      });
-    }
-  }, [selectedIndex]);
-
-  // 處理實際送出回報的邏輯
-  const handleReport = async (option: typeof REPORT_OPTIONS[0]) => {
-    if (isReporting || loading) return;
-
-    // 🌟 【新增：30 秒回報冷卻機制】防止連點或洗版
-    const COOLDOWN_SECONDS = 30;
-    const lastReportStr = localStorage.getItem('my_last_report_time');
-    
-    if (lastReportStr) {
-      const elapsedMs = Date.now() - parseInt(lastReportStr, 10);
-      const elapsedSecs = Math.floor(elapsedMs / 1000);
-
-      // 如果距離上次回報還不到 30 秒，擋下來！
-      if (elapsedSecs < COOLDOWN_SECONDS) {
-        const remainingSecs = COOLDOWN_SECONDS - elapsedSecs;
-        setStatusMessage(`⏳ 冷卻中... 請等待 ${remainingSecs} 秒`);
-        
-        // 3 秒後恢復原本的提示文字
-        setTimeout(() => {
-          setStatusMessage('請使用上下鍵選擇，按 Enter 回報');
-        }, 3000);
-        return; // 直接中斷，不送出 API
-      }
-    }
-
-    setIsReporting(true);
-    setStatusMessage('定位並傳送中，請稍候...');
-
-    try {
-      const currentCoords = await fetchLocation();
-
-      if (!currentCoords || !currentCoords.lat || !currentCoords.lng) {
-        throw new Error(errorMsg || '無法取得座標');
-      }
-
-      const response = await fetch('/api/newMapinfo', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          longtitude: currentCoords.lng,
-          latitude: currentCoords.lat,
-          title: option.title,
-          description: '透過實體按鍵手機回報',
-          events: option.event,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        // 🌟 成功送出後，更新時間戳記（同時給冷卻鎖、以及左下角警示燈過濾用）
-        localStorage.setItem('my_last_report_time', Date.now().toString());
-        
-        setStatusMessage(`回報成功！已記錄：${option.title}`);
-        setTimeout(() => {
-          router.push('/');
-        }, 2000);
-      } else {
-        console.error('API 錯誤回應:', result);
-        setStatusMessage(`回報失敗: ${result.error || '伺服器錯誤'}`);
-        setIsReporting(false);
-        setTimeout(() => {
-          setStatusMessage('請使用上下鍵選擇，按 Enter 回報');
-        }, 3000);
-      }
-    } catch (error) {
-      console.error('處理回報時發生錯誤:', error);
-      setStatusMessage('網路或定位失敗，請稍後再試。');
-      setIsReporting(false);
-      setTimeout(() => {
-        setStatusMessage('請使用上下鍵選擇，按 Enter 回報');
-      }, 3000);
-    }
-  };
-
-  const handleCancel = () => {
-    router.push('/');
-  };
-
-  // 監聽實體按鍵
+  // 監聽實體按鍵：2上 5下 0返回
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (isReporting || loading) return;
-
-      switch (event.key) {
-        case 'ArrowUp':
-        case '2':
-          event.preventDefault();
-          setSelectedIndex((prev) => (prev > 0 ? prev - 1 : REPORT_OPTIONS.length - 1));
-          break;
-        case 'ArrowDown':
-        case '5':
-          event.preventDefault();
-          setSelectedIndex((prev) => (prev < REPORT_OPTIONS.length - 1 ? prev + 1 : 0));
-          break;
-        case 'Enter':
-          event.preventDefault();
-          handleReport(REPORT_OPTIONS[selectedIndex]);
-          break;
-        case '0':
-          event.preventDefault();
-          handleCancel();
-          break;
-        default:
-          break;
+      if (event.key === '0') {
+        router.push('/');
+      } else if (event.key === '2') {
+        if (scrollRef.current) scrollRef.current.scrollBy({ top: -55, behavior: 'smooth' });
+      } else if (event.key === '5') {
+        if (scrollRef.current) scrollRef.current.scrollBy({ top: 55, behavior: 'smooth' });
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedIndex, isReporting, loading, router]);
+  }, [router]);
+
+  async function fetchEvents(userLat?: number, userLng?: number) {
+    setApiLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (userLat !== undefined && userLng !== undefined) {
+        params.set('latitude', userLat.toString());
+        params.set('longtitude', userLng.toString());
+      }
+
+      const res = await fetch(`/api/mapinfo?${params.toString()}`, { 
+        cache: 'no-store' 
+      });
+      
+      if (!res.ok) throw new Error('Failed to fetch events');
+      
+      const data: MapInfoItem[] = await res.json();
+
+      const processed = data
+        .filter((item) => item.events && EVENT_CONFIG[item.events])
+        .map((item) => {
+          const dist =
+            userLat !== undefined && userLng !== undefined
+              ? calculateDistance(userLat, userLng, item.latitude, item.longtitude)
+              : undefined;
+          return { ...item, distance: dist };
+        })
+        .sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
+
+      setEvents(processed);
+    } catch (err) {
+      console.error('Fetch error:', err);
+    } finally {
+      setApiLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (geoLoading) return;
+    if (location) {
+      fetchEvents(location.lat, location.lng);
+    } else if (errorMsg) {
+      fetchEvents();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location, geoLoading, errorMsg]);
+
+  const isPageLoading = geoLoading || (apiLoading && events.length === 0);
 
   return (
-    <main style={{ padding: '6px', textAlign: 'center', backgroundColor: '#ffffff', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-      <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '6px', color: '#000000' }}>
-        狀況回報選單
+    <main
+      style={{
+        width: '100%',
+        maxWidth: '240px',          // 最大寬度保護
+        height: '100vh',            // 滿版高度
+        maxHeight: '320px',         // 限制在功能機的最大高度內
+        margin: '0 auto',
+        overflow: 'hidden',         // 隱藏整頁的捲動，避免雙層捲軸
+        boxSizing: 'border-box',
+        padding: '6px',
+        display: 'flex',
+        flexDirection: 'column',    // 使用 flex 讓中間容器自動延展
+        alignItems: 'center',
+        backgroundColor: '#ffffff',
+        fontFamily: 'sans-serif',
+      }}
+    >
+      {/* 頂部狀態與提示區 */}
+      <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '2px', color: '#000000' }}>
+        周遭路況列表
       </h2>
-
-      {/* 狀態提示區 */}
-      <div style={{ fontSize: '11px', color: isReporting || loading || statusMessage.includes('冷卻中') ? '#2563eb' : '#dc2626', marginBottom: '8px', fontWeight: 'bold' }}>
-        {loading ? 'GPS 定位中...' : statusMessage}
+      <div style={{ fontSize: '10px', color: '#6b7280', marginBottom: '6px' }}>
+        [2]上滑 [5]下滑 | [0]返回
       </div>
 
-      {/* 模擬手機大小的顯示容器 */}
+      {/* 模擬手機大小的顯示容器 (列表區) */}
       <div
+        ref={scrollRef}
         style={{
-          width: '210px',
-          height: '110px',
-          margin: '0 auto',
-          overflowY: 'hidden',
+          width: '210px',           // 與圖二相同的 210px 寬度
+          flex: 1,                  // 自動填滿標題與底部按鈕之間的剩餘空間
+          overflowY: 'hidden',      // 隱藏預設捲軸，靠 2/5 按鍵程式化滑動
           border: '1px solid #d1d5db',
           borderRadius: '4px',
           backgroundColor: '#f9fafb',
@@ -177,51 +169,64 @@ export default function ReportPage() {
           gap: '4px',
         }}
       >
-        {REPORT_OPTIONS.map((opt, index) => {
-          const isSelected = index === selectedIndex;
-          return (
-            <div
-              key={opt.event}
-              ref={(el) => { itemRefs.current[index] = el; }}
-              onClick={() => {
-                setSelectedIndex(index);
-                handleReport(opt);
-              }}
-              style={{
-                padding: '6px 8px',
-                backgroundColor: isSelected ? '#000000' : '#ffffff',
-                color: isSelected ? '#ffffff' : '#000000',
-                border: isSelected ? '2px solid #2563eb' : '1px solid #e5e7eb',
-                borderRadius: '4px',
-                textAlign: 'left',
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                flexShrink: 0, 
-              }}
-            >
-              <span style={{ marginRight: '8px', opacity: 0.7 }}>[{index + 1}]</span>
-              <span>{opt.title}</span>
-            </div>
-          );
-        })}
-      </div>
+        {isPageLoading ? (
+          <div style={{ fontSize: '12px', color: '#6b7280', padding: '16px', textAlign: 'center' }}>
+            {geoLoading ? '定位中...' : '載入路況中...'}
+          </div>
+        ) : events.length === 0 ? (
+          <div style={{ fontSize: '12px', color: '#6b7280', padding: '16px', textAlign: 'center' }}>
+            周遭暫無突發路況
+          </div>
+        ) : (
+          events.map((item) => {
+            const config = EVENT_CONFIG[item.events || ''] || {
+              label: '一般事件',
+              prefix: '[提醒]',
+              color: '#374151',
+            };
 
-      {/* 按鍵操作指引 */}
-      <div style={{ fontSize: '10px', color: '#4b5563', marginTop: '6px', lineHeight: '1.3' }}>
-        <p><strong>[↑/2] [↓/5]</strong> 移動選擇</p>
-        <p><strong>[Enter]</strong> 確認送出回報</p>
+            return (
+              <div
+                key={item.id}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '6px 8px',
+                  backgroundColor: '#ffffff', 
+                  border: '1px solid #e5e7eb', // 內層卡片加一點邊框
+                  borderRadius: '4px',
+                  textAlign: 'left',
+                  flexShrink: 0, // 確保卡片不會因為 flex 空間不夠而被擠壓變形
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '13px', color: config.color, fontWeight: 'bold' }}>
+                    {config.prefix} {config.label}
+                  </span>
+                  {item.distance !== undefined && (
+                    <span style={{ fontSize: '10px', fontWeight: 'bold', backgroundColor: '#e5e7eb', color: '#374151', padding: '2px 4px', borderRadius: '3px' }}>
+                      {formatDistance(item.distance)}
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: '11px', color: '#4b5563' }}>
+                  {item.description || `座標: ${item.latitude.toFixed(3)}, ${item.longtitude.toFixed(3)}`}
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* 底部取消按鈕 */}
       <div
+        onClick={() => router.push('/')}
         style={{
-          marginTop: '8px',
-          width: '210px',
-          marginLeft: 'auto',
-          marginRight: 'auto',
+          cursor: 'pointer',
+          marginTop: '6px',
+          marginBottom: '2px',
+          width: '210px',           // 與上方容器寬度切齊
+          boxSizing: 'border-box',
           padding: '4px 8px',
           backgroundColor: '#fee2e2',
           border: '1px solid #f87171',
@@ -231,8 +236,12 @@ export default function ReportPage() {
           alignItems: 'center',
         }}
       >
-        <span style={{ fontSize: '11px', fontWeight: 'bold', backgroundColor: '#dc2626', color: '#ffffff', padding: '1px 5px', borderRadius: '3px', marginRight: '8px' }}>[ 0 ]</span>
-        <span style={{ fontSize: '12px', color: '#991b1b', fontWeight: 'bold' }}>取消返回</span>
+        <span style={{ fontSize: '12px', fontWeight: 'bold', backgroundColor: '#dc2626', color: '#ffffff', padding: '2px 6px', borderRadius: '3px', marginRight: '10px' }}>
+          [ 0 ]
+        </span>
+        <span style={{ fontSize: '12px', color: '#991b1b', fontWeight: 'bold' }}>
+          返回地圖
+        </span>
       </div>
     </main>
   );

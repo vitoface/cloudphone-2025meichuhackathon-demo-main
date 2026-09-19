@@ -711,6 +711,11 @@ export default function HomePage() {
         router.push('/report');
         return;
       }
+      if (e.key === '#') {
+        e.preventDefault();
+        router.push('/ai');
+        return;
+      }
 
       const map = mapInstanceRef.current;
       const L = leafletRef.current;

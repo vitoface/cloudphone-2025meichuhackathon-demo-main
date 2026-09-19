@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 // 🌟 路徑改為 @/component/useGeolocation
@@ -47,9 +47,9 @@ function calculateDistance(
 
 function formatDistance(distanceKm: number): string {
   if (distanceKm < 1) {
-    return `前方 ${Math.round(distanceKm * 1000)}m`;
+    return `距離 ${Math.round(distanceKm * 1000)}m`;
   }
-  return `前方 ${distanceKm.toFixed(1)}km`;
+  return `距離 ${distanceKm.toFixed(1)}km`;
 }
 
 export default function ListPage() {
@@ -57,16 +57,30 @@ export default function ListPage() {
   const [events, setEvents] = useState<(MapInfoItem & { distance?: number })[]>([]);
   const [apiLoading, setApiLoading] = useState(true);
 
-  // 👇 使用你的自訂 Hook (開啟 autoFetch)
+  // 新增 useRef 用來綁定需要滾動的容器
+  const scrollRef = useRef<HTMLElement>(null);
+
   const { location, errorMsg, loading: geoLoading } = useGeolocation({ autoFetch: true });
 
   // 監聽實體按鍵：按 0 返回主畫面
+  //擴充實體按鍵監聽：加入 2(上) 與 5(下)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === '0') {
         router.push('/');
+      } else if (event.key === '2') {
+        // 向上滑動 60px
+        if (scrollRef.current) {
+          scrollRef.current.scrollBy({ top: -60, behavior: 'smooth' });
+        }
+      } else if (event.key === '5') {
+        // 向下滑動 60px
+        if (scrollRef.current) {
+          scrollRef.current.scrollBy({ top: 60, behavior: 'smooth' });
+        }
       }
     };
+    
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
@@ -131,10 +145,15 @@ export default function ListPage() {
   return (
     <main
       style={{
+        width: '240px',           // 嚴格限制寬度符合手機螢幕
+        height: '320px',          // 嚴格限制高度
+        overflowY: 'auto',        // 內容超過高度時顯示垂直捲軸
+        overflowX: 'hidden',      // 隱藏水平捲軸避免破版
+        boxSizing: 'border-box',  // 讓 padding 包含在 240x320 的尺寸內
         padding: '6px',
+        margin: '0 auto',         // 在一般電腦螢幕開發時可以置中顯示
         textAlign: 'center',
         backgroundColor: '#ffffff',
-        minHeight: '100vh',
         fontFamily: 'sans-serif',
       }}
     >
@@ -166,7 +185,9 @@ export default function ListPage() {
               <div
                 key={item.id}
                 style={{
-                  width: '220px',
+                  width: '100%', // 改為 100% 自適應容器寬度 (扣除 padding)
+                  maxWidth: '220px', 
+                  boxSizing: 'border-box',
                   padding: '6px 8px',
                   backgroundColor: '#f3f4f6',
                   border: '1px solid #d1d5db',
@@ -199,7 +220,10 @@ export default function ListPage() {
         style={{
           cursor: 'pointer',
           marginTop: '12px',
-          width: '220px',
+          marginBottom: '12px', // 底部留白，避免被切掉
+          width: '100%',
+          maxWidth: '220px',
+          boxSizing: 'border-box',
           marginLeft: 'auto',
           marginRight: 'auto',
           padding: '6px 8px',

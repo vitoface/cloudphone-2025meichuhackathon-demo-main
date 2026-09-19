@@ -122,12 +122,10 @@ export function scheduleGridDensityRefresh() {
     clearTimeout(refreshTimer);
   }
 
-  refreshGridDensity()
-
-  // refreshTimer = setTimeout(() => {
-  //   refreshTimer = null;
-  //   void refreshGridDensity().catch((error) => {
-  //     console.error("Grid density refresh error:", error);
-  //   });
-  // }, REFRESH_DELAY_MS);
+  refreshTimer = setTimeout(() => {
+    refreshTimer = null;
+    void refreshGridDensity().catch((error) => {
+      console.error("Grid density refresh error:", error);
+    });
+  }, REFRESH_DELAY_MS);
 }

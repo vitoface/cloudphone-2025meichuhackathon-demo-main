@@ -112,7 +112,7 @@ export async function POST(request: Request) {
       );
     }
 
-    scheduleGridDensityRefresh();
+    // scheduleGridDensityRefresh();
 
     const { error: error_his } = await supabase
       .from("MapInfo_history")

@@ -143,7 +143,7 @@ export default function ReportPage() {
   const { fetchLocation, loading, errorMsg } = useGeolocation({ autoFetch: false });
 
   // 🌐 語言狀態管理
-  const [langCode, setLangCode] = useState<string>('zh');
+  const [langCode, setLangCode] = useState<string>('en');
 
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [isReporting, setIsReporting] = useState(false);
@@ -168,7 +168,7 @@ export default function ReportPage() {
     }
   }, []);
 
-  const t = translations[langCode as keyof typeof translations] || translations['zh'];
+  const t = translations[langCode as keyof typeof translations] || translations['en'];
 
   const getReportOptions = () => [
     { title: t.titleCrash, event: 'car_crash' },

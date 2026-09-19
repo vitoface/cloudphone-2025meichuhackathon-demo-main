@@ -201,7 +201,7 @@ export default function ListPage() {
   const [apiLoading, setApiLoading] = useState(true);
   
   // 🌐 語言狀態管理
-  const [langCode, setLangCode] = useState<string>('zh');
+  const [langCode, setLangCode] = useState<string>('en');
   
   // 用於綁定中間的列表容器，以程式化方式控制捲動
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -222,7 +222,7 @@ export default function ListPage() {
     }
   }, []);
 
-  const t = translations[langCode as keyof typeof translations] || translations['zh'];
+  const t = translations[langCode as keyof typeof translations] || translations['en'];
 
   // 動態獲取本地化的事件標籤與顏色
   const getEventConfig = (type: string) => {

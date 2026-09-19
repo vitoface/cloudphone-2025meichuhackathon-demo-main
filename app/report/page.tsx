@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGeolocation } from '@/component/useGeolocation';
 
@@ -20,7 +20,7 @@ const translations = {
     successStatus: (title: string) => `回報成功！已記錄：${title}`,
     failStatus: (err: string) => `回報失敗: ${err}`,
     serverError: '伺服器錯誤',
-    networkError: '網路或定位失敗，請稍後再試。',
+    networkError: '網路或定位失敗，已為您本機暫存。',
     gpsLocating: 'GPS 定位中...',
     move: '移動', send: '送出', cancelBack: '取消返回'
   },
@@ -36,7 +36,7 @@ const translations = {
     successStatus: (title: string) => `Success! Recorded: ${title}`,
     failStatus: (err: string) => `Failed: ${err}`,
     serverError: 'Server error',
-    networkError: 'Network/GPS failed, try again.',
+    networkError: 'Network/GPS failed, saved locally.',
     gpsLocating: 'Locating GPS...',
     move: 'Move', send: 'Send', cancelBack: 'Cancel & Back'
   },
@@ -52,7 +52,7 @@ const translations = {
     successStatus: (title: string) => `نجاح! تم تسجيل: ${title}`,
     failStatus: (err: string) => `فشل: ${err}`,
     serverError: 'خطأ في الخادم',
-    networkError: 'فشل الشبكة/الموقع، أعد المحاولة.',
+    networkError: 'فشل الشبكة/الموقع، تم الحفظ محلياً.',
     gpsLocating: 'جاري تحديد GPS...',
     move: 'تحريك', send: 'إرسال', cancelBack: 'إلغاء ورجوع'
   },
@@ -68,7 +68,7 @@ const translations = {
     successStatus: (title: string) => `Succès ! Enregistré : ${title}`,
     failStatus: (err: string) => `Échec : ${err}`,
     serverError: 'Erreur serveur',
-    networkError: 'Échec réseau/GPS, réessayez.',
+    networkError: 'Échec réseau/GPS, sauvegardé localement.',
     gpsLocating: 'Localisation GPS...',
     move: 'Déplacer', send: 'Envoyer', cancelBack: 'Annuler & Retour'
   },
@@ -84,7 +84,7 @@ const translations = {
     successStatus: (title: string) => `Sucesso! Registrado: ${title}`,
     failStatus: (err: string) => `Falha: ${err}`,
     serverError: 'Erro no servidor',
-    networkError: 'Falha de rede/GPS, tente novamente.',
+    networkError: 'Falha de rede/GPS, salvo localmente.',
     gpsLocating: 'Localizando GPS...',
     move: 'Mover', send: 'Enviar', cancelBack: 'Cancelar e Voltar'
   },
@@ -100,7 +100,7 @@ const translations = {
     successStatus: (title: string) => `Thành công! Đã lưu: ${title}`,
     failStatus: (err: string) => `Lỗi: ${err}`,
     serverError: 'Lỗi máy chủ',
-    networkError: 'Lỗi mạng/GPS, thử lại sau.',
+    networkError: 'Lỗi mạng/GPS, đã lưu trên máy.',
     gpsLocating: 'Đang định vị GPS...',
     move: 'Di chuyển', send: 'Gửi', cancelBack: 'Hủy & Quay lại'
   },
@@ -116,7 +116,7 @@ const translations = {
     successStatus: (title: string) => `Yayi! An yi rikodin: ${title}`,
     failStatus: (err: string) => `Ya gaza: ${err}`,
     serverError: 'Matsalar sabar',
-    networkError: 'Matsalar intanet/GPS, sake gwadawa.',
+    networkError: 'Matsalar intanet/GPS, an adana.',
     gpsLocating: 'Nemo GPS...',
     move: 'Matsa', send: 'Aika', cancelBack: 'Soke & Koma'
   },
@@ -132,7 +132,7 @@ const translations = {
     successStatus: (title: string) => `Imefanikiwa! Imerekodiwa: ${title}`,
     failStatus: (err: string) => `Imeshindwa: ${err}`,
     serverError: 'Hitilafu ya seva',
-    networkError: 'Mtandao/GPS imeshindwa, jaribu tena.',
+    networkError: 'Mtandao/GPS imeshindwa, imehifadhiwa.',
     gpsLocating: 'Inatafuta GPS...',
     move: 'Sogeza', send: 'Tuma', cancelBack: 'Ghairi & Rudi'
   }
@@ -142,8 +142,8 @@ export default function ReportPage() {
   const router = useRouter();
   const { fetchLocation, loading, errorMsg } = useGeolocation({ autoFetch: false });
 
-  // 🌐 語言狀態管理
-  const [langCode, setLangCode] = useState<string>('zh');
+  // 🌐 語言狀態管理 (預設英文為後備)
+  const [langCode, setLangCode] = useState<string>('en');
 
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [isReporting, setIsReporting] = useState(false);
@@ -153,7 +153,8 @@ export default function ReportPage() {
     payload?: string | number;
   }>({ type: 'default' });
 
-  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // 🌟 修改 Ref 型別以支援原生的 button
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -168,16 +169,16 @@ export default function ReportPage() {
     }
   }, []);
 
-  const t = translations[langCode as keyof typeof translations] || translations['zh'];
+  const t = translations[langCode as keyof typeof translations] || translations['en'];
 
-  const getReportOptions = () => [
+  // 🌟 使用 useMemo 快取選項陣列，避免觸發 useEffect 的無限迴圈渲染
+  const currentOptions = useMemo(() => [
     { title: t.titleCrash, event: 'car_crash' },
     { title: t.titleJam, event: 'traffic_jam' },
     { title: t.titleWork, event: 'roadwork' },
     { title: t.titleDanger, event: 'unknown_danger' },
     { title: t.titleDisaster, event: 'natural_disaster' },
-  ];
-  const currentOptions = getReportOptions();
+  ], [t]);
 
   let displayMessage = t.defaultStatus;
   if (status.type === 'cooldown') displayMessage = t.cooldownStatus(status.payload as number);
@@ -199,6 +200,19 @@ export default function ReportPage() {
     }
   }, [selectedIndex]);
 
+  // 可靠地寫入離線暫存
+  const saveToOfflineQueue = (payload: any) => {
+    try {
+      const raw = localStorage.getItem('offline_reports');
+      const queue = raw ? JSON.parse(raw) : [];
+      queue.push(payload);
+      localStorage.setItem('offline_reports', JSON.stringify(queue));
+      localStorage.setItem('my_last_report_time', Date.now().toString());
+    } catch (e) {
+      console.error('寫入 offline_reports 失敗:', e);
+    }
+  };
+
   // 處理送出回報的邏輯
   const handleReport = async (option: { title: string, event: string }) => {
     if (isReporting || loading) return;
@@ -214,10 +228,7 @@ export default function ReportPage() {
       if (elapsedSecs < COOLDOWN_SECONDS) {
         const remainingSecs = COOLDOWN_SECONDS - elapsedSecs;
         setStatus({ type: 'cooldown', payload: remainingSecs });
-        
-        setTimeout(() => {
-          setStatus({ type: 'default' });
-        }, 3000);
+        setTimeout(() => setStatus({ type: 'default' }), 3000);
         return;
       }
     }
@@ -225,52 +236,49 @@ export default function ReportPage() {
     setIsReporting(true);
     setStatus({ type: 'sending' });
 
+    // 優先取得座標
+    let lat = 24.7936;
+    let lng = 120.9917;
+
     try {
-      let currentCoords: { lat: number; lng: number } | null = null;
-      try {
-        currentCoords = await fetchLocation();
-      } catch {
-        // 定位抓不到時的保底備用
-        const savedLat = sessionStorage.getItem('map_last_lat');
-        const savedLng = sessionStorage.getItem('map_last_lng');
-        if (savedLat && savedLng) {
-          currentCoords = { lat: parseFloat(savedLat), lng: parseFloat(savedLng) };
-        }
+      const currentCoords = await fetchLocation();
+      if (currentCoords && currentCoords.lat && currentCoords.lng) {
+        lat = currentCoords.lat;
+        lng = currentCoords.lng;
       }
-
-      if (!currentCoords || !currentCoords.lat || !currentCoords.lng) {
-        throw new Error(errorMsg || t.noCoordsError);
+    } catch {
+      const savedLat = sessionStorage.getItem('map_last_lat');
+      const savedLng = sessionStorage.getItem('map_last_lng');
+      if (savedLat && savedLng) {
+        lat = parseFloat(savedLat);
+        lng = parseFloat(savedLng);
       }
+    }
 
-      const reportPayload = {
-        longtitude: currentCoords.lng,
-        latitude: currentCoords.lat,
-        title: option.title,
-        description: t.reportDesc,
-        events: option.event,
-        created_at: new Date().toISOString(),
-      };
+    const reportPayload = {
+      longtitude: lng,
+      latitude: lat,
+      title: option.title,
+      description: t.reportDesc,
+      events: option.event,
+      created_at: new Date().toISOString(),
+    };
 
-      // 🌟【關鍵修改】：斷網狀態下直接存本機 localStorage，不向外連線
-      if (typeof window !== 'undefined' && !navigator.onLine) {
-        const queue = JSON.parse(localStorage.getItem('offline_reports') || '[]');
-        queue.push(reportPayload);
-        localStorage.setItem('offline_reports', JSON.stringify(queue));
-        localStorage.setItem('my_last_report_time', Date.now().toString());
+    // 情況 A：無網路狀態
+    if (typeof window !== 'undefined' && !navigator.onLine) {
+      saveToOfflineQueue(reportPayload);
+      setStatus({ type: 'offline_saved' });
+      setTimeout(() => {
+        router.push('/');
+      }, 1500);
+      return;
+    }
 
-        setStatus({ type: 'offline_saved' });
-        setTimeout(() => {
-          router.push('/');
-        }, 2000);
-        return;
-      }
-
-      // 連線正常時直接發 API
+    // 情況 B：連線正常打 API
+    try {
       const response = await fetch('/api/newMapinfo', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reportPayload),
       });
 
@@ -281,42 +289,22 @@ export default function ReportPage() {
         setStatus({ type: 'success', payload: option.title });
         setTimeout(() => {
           router.push('/');
-        }, 2000);
+        }, 1500);
       } else {
-        console.error('API 錯誤回應:', result);
-        setStatus({ type: 'fail', payload: result.error || 'serverError' });
-        setIsReporting(false);
-        setTimeout(() => {
-          setStatus({ type: 'default' });
-        }, 3000);
-      }
-    } catch (error) {
-      console.error('處理回報時發生錯誤:', error);
-      
-      // 網路突然中斷時自動轉存本地暫存
-      if (typeof window !== 'undefined') {
-        const queue = JSON.parse(localStorage.getItem('offline_reports') || '[]');
-        queue.push({
-          longtitude: 120.9917,
-          latitude: 24.7936,
-          title: option.title,
-          description: t.reportDesc,
-          events: option.event,
-          created_at: new Date().toISOString(),
-        });
-        localStorage.setItem('offline_reports', JSON.stringify(queue));
+        saveToOfflineQueue(reportPayload);
         setStatus({ type: 'offline_saved' });
         setTimeout(() => {
           router.push('/');
-        }, 2000);
-        return;
+        }, 1500);
       }
-
-      setStatus({ type: 'network_error' });
-      setIsReporting(false);
+    } catch (error) {
+      // 情況 C：API 請求途中連線中斷
+      console.warn('API 呼叫失敗，自動轉入離線佇列:', error);
+      saveToOfflineQueue(reportPayload);
+      setStatus({ type: 'offline_saved' });
       setTimeout(() => {
-        setStatus({ type: 'default' });
-      }, 3000);
+        router.push('/');
+      }, 1500);
     }
   };
 
@@ -361,6 +349,7 @@ export default function ReportPage() {
 
   return (
     <main
+      suppressHydrationWarning
       dir={langCode === 'ar' ? 'rtl' : 'ltr'}
       style={{
         width: '100%',
@@ -378,22 +367,25 @@ export default function ReportPage() {
         fontFamily: 'sans-serif',
       }}
     >
-      {/* 頂部狀態與提示區 */}
       <div style={{ flexShrink: 0, textAlign: 'center', width: '100%' }}>
-        <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '2px', color: '#000000' }}>
+        {/* 🌟 加上 tabIndex 讓頂部標題與狀態也能被 KingVoice 朗讀 */}
+        <h2 tabIndex={0} style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '2px', color: '#000000' }}>
           {t.pageTitle}
         </h2>
-        <div style={{ 
-          fontSize: '11px', 
-          color: (isReporting || loading || status.type === 'cooldown' || status.type === 'offline_saved') ? '#2563eb' : '#dc2626', 
-          marginBottom: '6px', 
-          fontWeight: 'bold' 
-        }}>
+        <div 
+          tabIndex={0} 
+          aria-live="polite" 
+          style={{ 
+            fontSize: '11px', 
+            color: (isReporting || loading || status.type === 'cooldown' || status.type === 'offline_saved') ? '#2563eb' : '#dc2626', 
+            marginBottom: '6px', 
+            fontWeight: 'bold' 
+          }}
+        >
           {loading ? t.gpsLocating : displayMessage}
         </div>
       </div>
 
-      {/* 選單區 */}
       <div
         style={{
           width: '210px',
@@ -414,21 +406,28 @@ export default function ReportPage() {
         {currentOptions.map((opt, index) => {
           const isSelected = index === selectedIndex;
           return (
-            <div
+            // 🌟 更換為原生的 button 標籤
+            <button
               key={opt.event}
               ref={(el) => { itemRefs.current[index] = el; }}
+              tabIndex={0}
+              aria-label={`選項 ${index + 1}，${opt.title}`}
               onClick={() => {
                 setSelectedIndex(index);
                 handleReport(opt);
               }}
               style={{
+                display: 'flex',
+                appearance: 'none',
+                outline: 'none',
+                fontFamily: 'inherit',
+                width: '100%',
                 padding: '6px 8px',
                 backgroundColor: isSelected ? '#000000' : '#ffffff',
                 color: isSelected ? '#ffffff' : '#000000',
                 border: isSelected ? '2px solid #2563eb' : '1px solid #e5e7eb',
                 borderRadius: '4px',
                 textAlign: 'left',
-                display: 'flex',
                 alignItems: 'center',
                 cursor: 'pointer',
                 fontSize: '12px',
@@ -445,20 +444,26 @@ export default function ReportPage() {
                 [{index + 1}]
               </span>
               <span>{opt.title}</span>
-            </div>
+            </button>
           );
         })}
       </div>
 
-      {/* 底部按鍵指引與取消按鈕 */}
       <div style={{ flexShrink: 0, width: '210px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={{ fontSize: '10px', color: '#4b5563', marginTop: '6px', marginBottom: '4px', lineHeight: '1.3', textAlign: 'center' }}>
+        <div tabIndex={0} style={{ fontSize: '10px', color: '#4b5563', marginTop: '6px', marginBottom: '4px', lineHeight: '1.3', textAlign: 'center' }}>
           <span><strong>[↑/2] [↓/5]</strong> {t.move} | <strong>[Enter]</strong> {t.send}</span>
         </div>
 
-        <div
+        {/* 🌟 更換為原生的 button 標籤 */}
+        <button
           onClick={handleCancel}
+          tabIndex={0}
+          aria-label={t.cancelBack}
           style={{
+            display: 'flex',
+            appearance: 'none',
+            outline: 'none',
+            fontFamily: 'inherit',
             cursor: 'pointer',
             width: '100%',
             boxSizing: 'border-box',
@@ -467,7 +472,6 @@ export default function ReportPage() {
             border: '1px solid #f87171',
             borderRadius: '4px',
             textAlign: 'left',
-            display: 'flex',
             alignItems: 'center',
           }}
         >
@@ -486,7 +490,7 @@ export default function ReportPage() {
           <span style={{ fontSize: '12px', color: '#991b1b', fontWeight: 'bold' }}>
             {t.cancelBack}
           </span>
-        </div>
+        </button>
       </div>
     </main>
   );

@@ -227,8 +227,7 @@ export default function AiAnalysisPage() {
               fillColor: 'transparent', 
               weight: 2,
               dashArray: '5, 5',
-              radius: SEARCH_RADIUS,
-              language: langCode
+              radius: SEARCH_RADIUS
             }).addTo(map);
           }
         };
@@ -268,7 +267,8 @@ export default function AiAnalysisPage() {
         body: JSON.stringify({
           latitude: targetLat,
           longitude: targetLng,
-          radius: SEARCH_RADIUS
+          radius: SEARCH_RADIUS,
+          language: langCode
         })
       });
 

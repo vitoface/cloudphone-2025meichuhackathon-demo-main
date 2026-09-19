@@ -22,7 +22,7 @@ const translations = {
     networkError: '連線或分析失敗，請檢查網路。',
     executeBtn: '[Enter] 執行分析',
     backBtn: '[0] 返回主地圖',
-    moveZoomText: '[上下左右] 移動探測圈 | [1/3] 縮放'
+    moveZoomText: '[2546]移動 [方向鍵]捲動 | [1/3]縮放'
   },
   'en': {
     pageTitle: 'AI Area Danger Analysis',
@@ -38,7 +38,7 @@ const translations = {
     networkError: 'Connection or analysis failed, check network.',
     executeBtn: '[Enter] Analyze',
     backBtn: '[0] Back to map',
-    moveZoomText: '[Arrows] Move | [1/3] Zoom'
+    moveZoomText: '[2546]Move [Arrows]Scroll | [1/3]Zoom'
   },
   'ar': {
     pageTitle: 'تحليل المخاطر بالذكاء الاصطناعي',
@@ -54,7 +54,7 @@ const translations = {
     networkError: 'فشل الاتصال أو التحليل، تحقق من الشبكة.',
     executeBtn: '[Enter] تنفيذ التحليل',
     backBtn: '[0] العودة للخريطة',
-    moveZoomText: '[أسهم] تحريك | [1/3] تكبير/تصغير'
+    moveZoomText: '[2546]تحريك [أسهم]تمرير | [1/3]تكبير'
   },
   'fr': {
     pageTitle: 'Analyse de zone par IA',
@@ -70,7 +70,7 @@ const translations = {
     networkError: 'Échec de connexion ou d\'analyse, vérifiez le réseau.',
     executeBtn: '[Entrée] Analyser',
     backBtn: '[0] Retour à la carte',
-    moveZoomText: '[Flèches] Déplacer | [1/3] Zoom'
+    moveZoomText: '[2546]Déplacer [Flèches]Défiler | [1/3]Zoom'
   },
   'pt': {
     pageTitle: 'Análise de Perigo com IA',
@@ -86,7 +86,7 @@ const translations = {
     networkError: 'Falha na conexão ou análise, verifique a rede.',
     executeBtn: '[Enter] Analisar',
     backBtn: '[0] Voltar ao mapa',
-    moveZoomText: '[Setas] Mover | [1/3] Zoom'
+    moveZoomText: '[2546]Mover [Setas]Rolar | [1/3]Zoom'
   },
   'vi': {
     pageTitle: 'Phân tích Nguy hiểm AI',
@@ -102,7 +102,7 @@ const translations = {
     networkError: 'Lỗi kết nối/phân tích, kiểm tra mạng.',
     executeBtn: '[Enter] Phân tích',
     backBtn: '[0] Trở về bản đồ',
-    moveZoomText: '[Mũi tên] Di chuyển | [1/3] Thu phóng'
+    moveZoomText: '[2546]Di chuyển [Mũi tên]Cuộn | [1/3]Thu phóng'
   },
   'ha': {
     pageTitle: 'Binciken Haɗari na AI',
@@ -118,7 +118,7 @@ const translations = {
     networkError: 'Matsalar intanet, sake gwadawa.',
     executeBtn: '[Enter] Bincika',
     backBtn: '[0] Koma taswira',
-    moveZoomText: '[Kibau] Matsar | [1/3] Zun'
+    moveZoomText: '[2546]Matsar [Kibau]Gungura | [1/3]Zun'
   },
   'sw': {
     pageTitle: 'Uchambuzi wa Hatari wa AI',
@@ -134,7 +134,7 @@ const translations = {
     networkError: 'Imeshindwa kuunganisha, angalia mtandao.',
     executeBtn: '[Enter] Chambua',
     backBtn: '[0] Rudi kwenye ramani',
-    moveZoomText: '[Mishale] Sogeza | [1/3] Kuza'
+    moveZoomText: '[2546]Sogeza [Mishale]Tembeza | [1/3]Kuza'
   }
 };
 
@@ -163,6 +163,9 @@ export default function AiAnalysisPage() {
   const leafletRef = useRef<any>(null);
   const centerCircleRef = useRef<any>(null);
   const resultLayerGroupRef = useRef<any>(null);
+  
+  // 🌟 用於綁定分析文字區塊，以程式化方式控制捲動
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // 初始化語言
   useEffect(() => {
@@ -400,14 +403,36 @@ export default function AiAnalysisPage() {
       const map = mapInstanceRef.current;
       if (!map) return;
       const panDistance = 40;
+      const scrollDistance = 30; // 定義文字捲動距離
 
       switch(e.key) {
         case '1': map.zoomIn(); break;
         case '3': map.zoomOut(); break;
-        case '2': case 'ArrowUp': map.panBy([0, -panDistance]); break;
-        case '5': case 'ArrowDown': map.panBy([0, panDistance]); break;
-        case '4': case 'ArrowLeft': map.panBy([-panDistance, 0]); break;
-        case '6': case 'ArrowRight': map.panBy([panDistance, 0]); break;
+        
+        // 🌟 獨立 2546 為地圖平移
+        case '2': map.panBy([0, -panDistance]); break;
+        case '5': map.panBy([0, panDistance]); break;
+        case '4': map.panBy([-panDistance, 0]); break;
+        case '6': map.panBy([panDistance, 0]); break;
+        
+        // 🌟 獨立上下左右鍵 (Arrows) 用來控制分析區文字的 Scroll bar
+        case 'ArrowUp': 
+          e.preventDefault();
+          if (scrollRef.current) scrollRef.current.scrollBy({ top: -scrollDistance, behavior: 'smooth' });
+          break;
+        case 'ArrowDown': 
+          e.preventDefault();
+          if (scrollRef.current) scrollRef.current.scrollBy({ top: scrollDistance, behavior: 'smooth' });
+          break;
+        case 'ArrowLeft': 
+          e.preventDefault();
+          if (scrollRef.current) scrollRef.current.scrollBy({ left: -scrollDistance, behavior: 'smooth' });
+          break;
+        case 'ArrowRight': 
+          e.preventDefault();
+          if (scrollRef.current) scrollRef.current.scrollBy({ left: scrollDistance, behavior: 'smooth' });
+          break;
+
         case 'Enter': 
           e.preventDefault();
           handleAiAnalysis(); 
@@ -445,13 +470,16 @@ export default function AiAnalysisPage() {
         <div ref={mapContainerRef} dir="ltr" style={{ width: '100%', height: '100%', borderRadius: '6px', border: '1px solid #d1d5db' }} />
       </div>
 
-      {/* 🌟 文字方塊改為固定高度 80px，不浪費空間 */}
-      <div style={{
-        flexShrink: 0, width: '220px', height: '80px', marginTop: '4px', backgroundColor: '#f3f4f6', 
-        border: '1px solid #e5e7eb', borderRadius: '4px', padding: '6px',
-        overflowY: 'auto', fontSize: '11px', color: '#1f2937', lineHeight: '1.4',
-        display: 'flex', flexDirection: 'column'
-      }}>
+      {/* 🌟 文字方塊加入 ref 並確認 overflow 支援 Scroll */}
+      <div 
+        ref={scrollRef}
+        style={{
+          flexShrink: 0, width: '220px', height: '80px', marginTop: '4px', backgroundColor: '#f3f4f6', 
+          border: '1px solid #e5e7eb', borderRadius: '4px', padding: '6px',
+          overflowY: 'auto', overflowX: 'auto', fontSize: '11px', color: '#1f2937', lineHeight: '1.4',
+          display: 'flex', flexDirection: 'column'
+        }}
+      >
         {densityInfo && (
           <div style={{ fontWeight: 'bold', marginBottom: '4px', borderBottom: '1px solid #d1d5db', paddingBottom: '2px' }}>
             {densityInfo}

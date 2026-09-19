@@ -196,7 +196,8 @@ export default function AiAnalysisPage() {
         riskLevel = '🟡 中風險';
       }
 
-      setDensityInfo(`${riskLevel} | 指數: ${riskIndex.toFixed(1)}/10.0 (聚集係數: ${clusterMultiplier.toFixed(1)}x)`);
+      // 縮短文字，去掉 /10.0 和 係數 兩字
+      setDensityInfo(`${riskLevel} | 指數:${riskIndex.toFixed(1)} (聚集:${clusterMultiplier.toFixed(1)}x)`);
       setAiSummary(data.summary || '分析完成。');
 
       if (L) {
@@ -274,17 +275,19 @@ export default function AiAnalysisPage() {
       margin: '0 auto', display: 'flex', flexDirection: 'column', 
       alignItems: 'center', backgroundColor: '#ffffff', padding: '4px', boxSizing: 'border-box'
     }}>
-      <h2 style={{ fontSize: '13px', fontWeight: 'bold', margin: '2px 0', color: '#1e40af' }}>
+      <h2 style={{ fontSize: '13px', fontWeight: 'bold', margin: '2px 0', color: '#1e40af', flexShrink: 0 }}>
         AI 區域危險分析
       </h2>
 
-      <div style={{ position: 'relative', width: '100%', maxWidth: '220px', height: '120px', flexShrink: 0 }}>
+      {/* 🌟 讓地圖 flex: 1 自動撐開，變成畫面上的主角 */}
+      <div style={{ position: 'relative', width: '100%', maxWidth: '220px', flex: 1, minHeight: '130px' }}>
         <div ref={mapContainerRef} style={{ width: '100%', height: '100%', borderRadius: '6px', border: '1px solid #d1d5db' }} />
       </div>
 
+      {/* 🌟 文字方塊改為固定高度 80px，不浪費空間 */}
       <div style={{
-        flex: 1, width: '220px', marginTop: '4px', backgroundColor: '#f3f4f6', 
-        border: '1px solid #e5e7eb', borderRadius: '4px', padding: '4px',
+        flexShrink: 0, width: '220px', height: '80px', marginTop: '4px', backgroundColor: '#f3f4f6', 
+        border: '1px solid #e5e7eb', borderRadius: '4px', padding: '6px',
         overflowY: 'auto', fontSize: '11px', color: '#1f2937', lineHeight: '1.4',
         display: 'flex', flexDirection: 'column'
       }}>
@@ -294,13 +297,12 @@ export default function AiAnalysisPage() {
           </div>
         )}
         
-        {/* 加入 fontWeight 讓 AI 的簡短警告更顯眼 */}
         <div style={{ whiteSpace: 'pre-wrap', color: loading ? '#2563eb' : '#dc2626', fontWeight: loading ? 'normal' : 'bold' }}>
           {aiSummary}
         </div>
       </div>
 
-      <div style={{ flexShrink: 0, width: '220px', textAlign: 'center', marginTop: '2px', fontSize: '10px', color: '#4b5563' }}>
+      <div style={{ flexShrink: 0, width: '220px', textAlign: 'center', marginTop: '3px', fontSize: '10px', color: '#4b5563' }}>
         <span style={{ color: '#2563eb', fontWeight: 'bold' }}>[Enter] 執行分析</span> | <span>[0] 返回主地圖</span><br/>
         <span>[上下左右] 移動探測圈 | [1/3] 縮放</span>
       </div>

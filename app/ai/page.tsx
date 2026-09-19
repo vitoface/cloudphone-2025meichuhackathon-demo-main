@@ -4,6 +4,140 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGeolocation } from '@/component/useGeolocation';
 
+// ==========================================
+// 🌐 多國語言字典 (i18n Translations)
+// ==========================================
+const translations = {
+  'zh': {
+    pageTitle: 'AI 區域危險分析',
+    defaultSummary: '移動中心探測圈，按 [Enter] 進行危險分析。',
+    analyzing: 'AI 分析中...',
+    apiError: 'API 回應錯誤',
+    noDisaster: '✅ 無災害',
+    lowRisk: '🟢 低風險',
+    mediumRisk: '🟡 中風險',
+    highRisk: '🔴 高風險',
+    densityFormat: (level: string, index: string, multiplier: string) => `${level} | 指數:${index} (聚集:${multiplier}x)`,
+    analysisComplete: '分析完成。',
+    networkError: '連線或分析失敗，請檢查網路。',
+    executeBtn: '[Enter] 執行分析',
+    backBtn: '[0] 返回主地圖',
+    moveZoomText: '[上下左右] 移動探測圈 | [1/3] 縮放'
+  },
+  'en': {
+    pageTitle: 'AI Area Danger Analysis',
+    defaultSummary: 'Move center circle, press [Enter] to analyze.',
+    analyzing: 'AI Analyzing...',
+    apiError: 'API response error',
+    noDisaster: '✅ No disaster',
+    lowRisk: '🟢 Low risk',
+    mediumRisk: '🟡 Medium risk',
+    highRisk: '🔴 High risk',
+    densityFormat: (level: string, index: string, multiplier: string) => `${level} | Index:${index} (Cluster:${multiplier}x)`,
+    analysisComplete: 'Analysis complete.',
+    networkError: 'Connection or analysis failed, check network.',
+    executeBtn: '[Enter] Analyze',
+    backBtn: '[0] Back to map',
+    moveZoomText: '[Arrows] Move | [1/3] Zoom'
+  },
+  'ar': {
+    pageTitle: 'تحليل المخاطر بالذكاء الاصطناعي',
+    defaultSummary: 'حرك الدائرة المركزية، اضغط [Enter] للتحليل.',
+    analyzing: 'جاري تحليل الذكاء الاصطناعي...',
+    apiError: 'خطأ في استجابة واجهة برمجة التطبيقات',
+    noDisaster: '✅ لا توجد كوارث',
+    lowRisk: '🟢 خطر منخفض',
+    mediumRisk: '🟡 خطر متوسط',
+    highRisk: '🔴 خطر عالي',
+    densityFormat: (level: string, index: string, multiplier: string) => `${level} | مؤشر:${index} (تجمع:${multiplier}x)`,
+    analysisComplete: 'اكتمل التحليل.',
+    networkError: 'فشل الاتصال أو التحليل، تحقق من الشبكة.',
+    executeBtn: '[Enter] تنفيذ التحليل',
+    backBtn: '[0] العودة للخريطة',
+    moveZoomText: '[أسهم] تحريك | [1/3] تكبير/تصغير'
+  },
+  'fr': {
+    pageTitle: 'Analyse de zone par IA',
+    defaultSummary: 'Déplacez le cercle central, appuyez sur [Entrée] pour analyser.',
+    analyzing: 'Analyse IA en cours...',
+    apiError: 'Erreur de réponse API',
+    noDisaster: '✅ Aucun désastre',
+    lowRisk: '🟢 Risque faible',
+    mediumRisk: '🟡 Risque moyen',
+    highRisk: '🔴 Risque élevé',
+    densityFormat: (level: string, index: string, multiplier: string) => `${level} | Indice:${index} (Groupe:${multiplier}x)`,
+    analysisComplete: 'Analyse terminée.',
+    networkError: 'Échec de connexion ou d\'analyse, vérifiez le réseau.',
+    executeBtn: '[Entrée] Analyser',
+    backBtn: '[0] Retour à la carte',
+    moveZoomText: '[Flèches] Déplacer | [1/3] Zoom'
+  },
+  'pt': {
+    pageTitle: 'Análise de Perigo com IA',
+    defaultSummary: 'Mova o círculo central, pressione [Enter] para analisar.',
+    analyzing: 'IA Analisando...',
+    apiError: 'Erro de resposta da API',
+    noDisaster: '✅ Sem desastres',
+    lowRisk: '🟢 Baixo risco',
+    mediumRisk: '🟡 Médio risco',
+    highRisk: '🔴 Alto risco',
+    densityFormat: (level: string, index: string, multiplier: string) => `${level} | Índice:${index} (Cluster:${multiplier}x)`,
+    analysisComplete: 'Análise concluída.',
+    networkError: 'Falha na conexão ou análise, verifique a rede.',
+    executeBtn: '[Enter] Analisar',
+    backBtn: '[0] Voltar ao mapa',
+    moveZoomText: '[Setas] Mover | [1/3] Zoom'
+  },
+  'vi': {
+    pageTitle: 'Phân tích Nguy hiểm AI',
+    defaultSummary: 'Di chuyển vòng tròn, nhấn [Enter] để phân tích.',
+    analyzing: 'AI Đang phân tích...',
+    apiError: 'Lỗi phản hồi API',
+    noDisaster: '✅ Không có thảm họa',
+    lowRisk: '🟢 Rủi ro thấp',
+    mediumRisk: '🟡 Rủi ro trung bình',
+    highRisk: '🔴 Rủi ro cao',
+    densityFormat: (level: string, index: string, multiplier: string) => `${level} | Chỉ số:${index} (Cụm:${multiplier}x)`,
+    analysisComplete: 'Phân tích hoàn tất.',
+    networkError: 'Lỗi kết nối/phân tích, kiểm tra mạng.',
+    executeBtn: '[Enter] Phân tích',
+    backBtn: '[0] Trở về bản đồ',
+    moveZoomText: '[Mũi tên] Di chuyển | [1/3] Thu phóng'
+  },
+  'ha': {
+    pageTitle: 'Binciken Haɗari na AI',
+    defaultSummary: 'Matsar da da\'irar, danna [Enter] don bincike.',
+    analyzing: 'AI tana bincike...',
+    apiError: 'Matsalar API',
+    noDisaster: '✅ Babu bala\'i',
+    lowRisk: '🟢 Karamin haɗari',
+    mediumRisk: '🟡 Matsakaicin haɗari',
+    highRisk: '🔴 Babban haɗari',
+    densityFormat: (level: string, index: string, multiplier: string) => `${level} | Lamba:${index} (Tari:${multiplier}x)`,
+    analysisComplete: 'An gama bincike.',
+    networkError: 'Matsalar intanet, sake gwadawa.',
+    executeBtn: '[Enter] Bincika',
+    backBtn: '[0] Koma taswira',
+    moveZoomText: '[Kibau] Matsar | [1/3] Zun'
+  },
+  'sw': {
+    pageTitle: 'Uchambuzi wa Hatari wa AI',
+    defaultSummary: 'Sogeza mduara, bonyeza [Enter] kuchambua.',
+    analyzing: 'AI inachambua...',
+    apiError: 'Hitilafu ya API',
+    noDisaster: '✅ Hakuna janga',
+    lowRisk: '🟢 Hatari ndogo',
+    mediumRisk: '🟡 Hatari ya kati',
+    highRisk: '🔴 Hatari kubwa',
+    densityFormat: (level: string, index: string, multiplier: string) => `${level} | Kielezo:${index} (Kundi:${multiplier}x)`,
+    analysisComplete: 'Uchambuzi umekamilika.',
+    networkError: 'Imeshindwa kuunganisha, angalia mtandao.',
+    executeBtn: '[Enter] Chambua',
+    backBtn: '[0] Rudi kwenye ramani',
+    moveZoomText: '[Mishale] Sogeza | [1/3] Kuza'
+  }
+};
+
 interface AiResponse {
   summary: string;
   disasterCount?: number; 
@@ -14,8 +148,11 @@ export default function AiAnalysisPage() {
   const router = useRouter();
   const { location: geoCoords } = useGeolocation({ autoFetch: true });
   
+  // 🌐 語言狀態管理 (預設英文為後備)
+  const [langCode, setLangCode] = useState<string>('en');
+
   const [loading, setLoading] = useState(false);
-  const [aiSummary, setAiSummary] = useState<string>('移動中心探測圈，按 [Enter] 進行危險分析。');
+  const [aiSummary, setAiSummary] = useState<string>(''); // 初始為空字串，將由翻譯字典提供預設
   const [densityInfo, setDensityInfo] = useState<string>(''); 
   const [viewCenter, setViewCenter] = useState({ lat: 24.7936, lng: 120.9917 }); 
   
@@ -26,6 +163,22 @@ export default function AiAnalysisPage() {
   const leafletRef = useRef<any>(null);
   const centerCircleRef = useRef<any>(null);
   const resultLayerGroupRef = useRef<any>(null);
+
+  // 初始化語言
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const navLang = navigator.language.split('-')[0].toLowerCase();
+      if (navigator.language.toLowerCase().startsWith('zh')) {
+        setLangCode('zh');
+      } else if (translations[navLang as keyof typeof translations]) {
+        setLangCode(navLang);
+      } else {
+        setLangCode('en');
+      }
+    }
+  }, []);
+
+  const t = translations[langCode as keyof typeof translations] || translations['en'];
 
   useEffect(() => {
     const mapContainer = mapContainerRef.current;
@@ -97,7 +250,7 @@ export default function AiAnalysisPage() {
   const handleAiAnalysis = async () => {
     if (loading) return;
     setLoading(true);
-    setAiSummary('AI 分析中...');
+    setAiSummary(t.analyzing);
     setDensityInfo('');
     
     if (resultLayerGroupRef.current) {
@@ -118,7 +271,7 @@ export default function AiAnalysisPage() {
         })
       });
 
-      if (!res.ok) throw new Error('API 回應錯誤');
+      if (!res.ok) throw new Error(t.apiError);
       
       const data: AiResponse = await res.json();
       const L = leafletRef.current;
@@ -184,21 +337,21 @@ export default function AiAnalysisPage() {
 
       // 🌟 6. 判定標準
       let riskColor = '#22c55e'; // 綠色
-      let riskLevel = '🟢 低風險';
+      let riskLevel = t.lowRisk;
       
       if (count === 0) {
-        riskLevel = '✅ 無災害'; 
+        riskLevel = t.noDisaster; 
       } else if (riskIndex >= 6.5) {
         riskColor = '#ef4444'; 
-        riskLevel = '🔴 高風險';
+        riskLevel = t.highRisk;
       } else if (riskIndex >= 3.0) {
         riskColor = '#eab308'; 
-        riskLevel = '🟡 中風險';
+        riskLevel = t.mediumRisk;
       }
 
       // 縮短文字，去掉 /10.0 和 係數 兩字
-      setDensityInfo(`${riskLevel} | 指數:${riskIndex.toFixed(1)} (聚集:${clusterMultiplier.toFixed(1)}x)`);
-      setAiSummary(data.summary || '分析完成。');
+      setDensityInfo(t.densityFormat(riskLevel, riskIndex.toFixed(1), clusterMultiplier.toFixed(1)));
+      setAiSummary(data.summary || t.analysisComplete);
 
       if (L) {
         L.circle([targetLat, targetLng], {
@@ -235,7 +388,7 @@ export default function AiAnalysisPage() {
       }
 
     } catch (error) {
-      setAiSummary('連線或分析失敗，請檢查網路。');
+      setAiSummary(t.networkError);
     } finally {
       setLoading(false);
     }
@@ -267,21 +420,28 @@ export default function AiAnalysisPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [loading, viewCenter, router]);
+  }, [loading, viewCenter, router, handleAiAnalysis]); // Added handleAiAnalysis to deps
+
+  // 若未執行分析或取得資料前，提供預設顯示
+  const displaySummary = aiSummary || t.defaultSummary;
 
   return (
-    <main style={{
-      width: '100%', maxWidth: '240px', height: '100vh', maxHeight: '320px',
-      margin: '0 auto', display: 'flex', flexDirection: 'column', 
-      alignItems: 'center', backgroundColor: '#ffffff', padding: '4px', boxSizing: 'border-box'
-    }}>
+    <main 
+      dir={langCode === 'ar' ? 'rtl' : 'ltr'}
+      style={{
+        width: '100%', maxWidth: '240px', height: '100vh', maxHeight: '320px',
+        margin: '0 auto', display: 'flex', flexDirection: 'column', 
+        alignItems: 'center', backgroundColor: '#ffffff', padding: '4px', boxSizing: 'border-box'
+      }}
+    >
       <h2 style={{ fontSize: '13px', fontWeight: 'bold', margin: '2px 0', color: '#1e40af', flexShrink: 0 }}>
-        AI 區域危險分析
+        {t.pageTitle}
       </h2>
 
       {/* 🌟 讓地圖 flex: 1 自動撐開，變成畫面上的主角 */}
       <div style={{ position: 'relative', width: '100%', maxWidth: '220px', flex: 1, minHeight: '130px' }}>
-        <div ref={mapContainerRef} style={{ width: '100%', height: '100%', borderRadius: '6px', border: '1px solid #d1d5db' }} />
+        {/* Leaflet map usually expects LTR internally to avoid tile offset issues, thus dir="ltr" here */}
+        <div ref={mapContainerRef} dir="ltr" style={{ width: '100%', height: '100%', borderRadius: '6px', border: '1px solid #d1d5db' }} />
       </div>
 
       {/* 🌟 文字方塊改為固定高度 80px，不浪費空間 */}
@@ -298,13 +458,13 @@ export default function AiAnalysisPage() {
         )}
         
         <div style={{ whiteSpace: 'pre-wrap', color: loading ? '#2563eb' : '#dc2626', fontWeight: loading ? 'normal' : 'bold' }}>
-          {aiSummary}
+          {displaySummary}
         </div>
       </div>
 
       <div style={{ flexShrink: 0, width: '220px', textAlign: 'center', marginTop: '3px', fontSize: '10px', color: '#4b5563' }}>
-        <span style={{ color: '#2563eb', fontWeight: 'bold' }}>[Enter] 執行分析</span> | <span>[0] 返回主地圖</span><br/>
-        <span>[上下左右] 移動探測圈 | [1/3] 縮放</span>
+        <span style={{ color: '#2563eb', fontWeight: 'bold' }}>{t.executeBtn}</span> | <span>{t.backBtn}</span><br/>
+        <span>{t.moveZoomText}</span>
       </div>
     </main>
   );

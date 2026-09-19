@@ -656,7 +656,6 @@ export default function HomePage() {
         const marker = L.marker([userLocationRef.current.lat, userLocationRef.current.lng], {
           draggable: true 
         }).addTo(map);
-        marker.bindPopup(t.myLocation);
         markerRef.current = marker;
 
         marker.on('dragend', function (e: any) {
@@ -765,7 +764,6 @@ export default function HomePage() {
 
         if (markerRef.current) {
           markerRef.current.setLatLng([center.lat, center.lng]);
-          markerRef.current.openPopup();
         }
 
         hasInitializedCenterRef.current = true;

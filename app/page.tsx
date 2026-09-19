@@ -1,69 +1,82 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState, useEffect } from 'react';
+
+export default function HomePage() {
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const fetchLocation = () => {
+    setLoading(true);
+    setErrorMsg('');
+
+    // 檢查瀏覽器是否支援 Geolocation API
+    if (!navigator.geolocation) {
+      setErrorMsg('此裝置不支援定位功能');
+      setLoading(false);
+      return;
+    }
+
+    // 請求 GPS 定位
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+        setLoading(false);
+      },
+      (error) => {
+        // 處理常見錯誤（例如：權限拒絕、無法抓取位置、逾時）
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setErrorMsg('未允許定位權限');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setErrorMsg('無法取得目前位置');
+            break;
+          case error.TIMEOUT:
+            setErrorMsg('定位請求逾時');
+            break;
+          default:
+            setErrorMsg('發生未知錯誤');
+            break;
+        }
+        setLoading(false);
+      },
+      {
+        enableHighAccuracy: true, // 嘗試使用高精度 GPS
+        timeout: 10000,           // 10 秒逾時
+        maximumAge: 0             // 不使用快取，取得當前最新位置
+      }
+    );
+  };
+
+  useEffect(() => {
+    fetchLocation();
+  }, []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main style={{ padding: '8px', color: '#fff' }}>
+      <h2 style={{ fontSize: '14px', marginBottom: '8px' }}>即時路況查詢</h2>
+
+      {loading && <p style={{ fontSize: '12px' }}>正在取得 GPS 定位中...</p>}
+      
+      {errorMsg && (
+        <div style={{ color: '#ff6b6b', fontSize: '12px' }}>
+          <p>{errorMsg}</p>
+          <p style={{ marginTop: '4px' }}>請按重試鍵重新整理</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      )}
+
+      {location && (
+        <div style={{ fontSize: '12px' }}>
+          <p>緯度：{location.lat.toFixed(4)}</p>
+          <p>經度：{location.lng.toFixed(4)}</p>
+          {/* 接下來可以在這裡傳入經緯度，呼叫路況 API */}
         </div>
-      </main>
-    </div>
+      )}
+    </main>
   );
 }

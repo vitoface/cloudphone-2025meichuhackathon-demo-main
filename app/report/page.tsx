@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGeolocation } from '@/component/useGeolocation';
 
@@ -142,7 +142,7 @@ export default function ReportPage() {
   const router = useRouter();
   const { fetchLocation, loading, errorMsg } = useGeolocation({ autoFetch: false });
 
-  // 🌐 語言狀態管理
+  // 🌐 語言狀態管理 (預設英文為後備)
   const [langCode, setLangCode] = useState<string>('en');
 
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
@@ -153,7 +153,8 @@ export default function ReportPage() {
     payload?: string | number;
   }>({ type: 'default' });
 
-  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // 🌟 修改 Ref 型別以支援原生的 button
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -170,14 +171,14 @@ export default function ReportPage() {
 
   const t = translations[langCode as keyof typeof translations] || translations['en'];
 
-  const getReportOptions = () => [
+  // 🌟 使用 useMemo 快取選項陣列，避免觸發 useEffect 的無限迴圈渲染
+  const currentOptions = useMemo(() => [
     { title: t.titleCrash, event: 'car_crash' },
     { title: t.titleJam, event: 'traffic_jam' },
     { title: t.titleWork, event: 'roadwork' },
     { title: t.titleDanger, event: 'unknown_danger' },
     { title: t.titleDisaster, event: 'natural_disaster' },
-  ];
-  const currentOptions = getReportOptions();
+  ], [t]);
 
   let displayMessage = t.defaultStatus;
   if (status.type === 'cooldown') displayMessage = t.cooldownStatus(status.payload as number);
@@ -199,7 +200,7 @@ export default function ReportPage() {
     }
   }, [selectedIndex]);
 
-  // 🌟 輔助函式：可靠地寫入離線暫存
+  // 可靠地寫入離線暫存
   const saveToOfflineQueue = (payload: any) => {
     try {
       const raw = localStorage.getItem('offline_reports');
@@ -235,7 +236,7 @@ export default function ReportPage() {
     setIsReporting(true);
     setStatus({ type: 'sending' });
 
-    // 優先取得座標：先向 GPS 請求，失敗則依序向 sessionStorage 與預設值 fallback
+    // 優先取得座標
     let lat = 24.7936;
     let lng = 120.9917;
 
@@ -254,7 +255,6 @@ export default function ReportPage() {
       }
     }
 
-    // 🌟 統一 Payload 格式（注意 longtitude 的拼字需與後端完全一致）
     const reportPayload = {
       longtitude: lng,
       latitude: lat,
@@ -264,7 +264,7 @@ export default function ReportPage() {
       created_at: new Date().toISOString(),
     };
 
-    // 🌟 情況 A：當前處於無網路狀態（或 navigator.onLine 為 false）
+    // 情況 A：無網路狀態
     if (typeof window !== 'undefined' && !navigator.onLine) {
       saveToOfflineQueue(reportPayload);
       setStatus({ type: 'offline_saved' });
@@ -274,7 +274,7 @@ export default function ReportPage() {
       return;
     }
 
-    // 🌟 情況 B：連線正常，直接打 API
+    // 情況 B：連線正常打 API
     try {
       const response = await fetch('/api/newMapinfo', {
         method: 'POST',
@@ -291,7 +291,6 @@ export default function ReportPage() {
           router.push('/');
         }, 1500);
       } else {
-        // 如果後端回報錯誤，存入本機備援
         saveToOfflineQueue(reportPayload);
         setStatus({ type: 'offline_saved' });
         setTimeout(() => {
@@ -299,7 +298,7 @@ export default function ReportPage() {
         }, 1500);
       }
     } catch (error) {
-      // 🌟 情況 C：API 請求途中連線中斷（Failed to fetch），自動轉入離線暫存
+      // 情況 C：API 請求途中連線中斷
       console.warn('API 呼叫失敗，自動轉入離線佇列:', error);
       saveToOfflineQueue(reportPayload);
       setStatus({ type: 'offline_saved' });
@@ -350,6 +349,7 @@ export default function ReportPage() {
 
   return (
     <main
+      suppressHydrationWarning
       dir={langCode === 'ar' ? 'rtl' : 'ltr'}
       style={{
         width: '100%',
@@ -368,15 +368,20 @@ export default function ReportPage() {
       }}
     >
       <div style={{ flexShrink: 0, textAlign: 'center', width: '100%' }}>
-        <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '2px', color: '#000000' }}>
+        {/* 🌟 加上 tabIndex 讓頂部標題與狀態也能被 KingVoice 朗讀 */}
+        <h2 tabIndex={0} style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '2px', color: '#000000' }}>
           {t.pageTitle}
         </h2>
-        <div style={{ 
-          fontSize: '11px', 
-          color: (isReporting || loading || status.type === 'cooldown' || status.type === 'offline_saved') ? '#2563eb' : '#dc2626', 
-          marginBottom: '6px', 
-          fontWeight: 'bold' 
-        }}>
+        <div 
+          tabIndex={0} 
+          aria-live="polite" 
+          style={{ 
+            fontSize: '11px', 
+            color: (isReporting || loading || status.type === 'cooldown' || status.type === 'offline_saved') ? '#2563eb' : '#dc2626', 
+            marginBottom: '6px', 
+            fontWeight: 'bold' 
+          }}
+        >
           {loading ? t.gpsLocating : displayMessage}
         </div>
       </div>
@@ -401,21 +406,28 @@ export default function ReportPage() {
         {currentOptions.map((opt, index) => {
           const isSelected = index === selectedIndex;
           return (
-            <div
+            // 🌟 更換為原生的 button 標籤
+            <button
               key={opt.event}
               ref={(el) => { itemRefs.current[index] = el; }}
+              tabIndex={0}
+              aria-label={`選項 ${index + 1}，${opt.title}`}
               onClick={() => {
                 setSelectedIndex(index);
                 handleReport(opt);
               }}
               style={{
+                display: 'flex',
+                appearance: 'none',
+                outline: 'none',
+                fontFamily: 'inherit',
+                width: '100%',
                 padding: '6px 8px',
                 backgroundColor: isSelected ? '#000000' : '#ffffff',
                 color: isSelected ? '#ffffff' : '#000000',
                 border: isSelected ? '2px solid #2563eb' : '1px solid #e5e7eb',
                 borderRadius: '4px',
                 textAlign: 'left',
-                display: 'flex',
                 alignItems: 'center',
                 cursor: 'pointer',
                 fontSize: '12px',
@@ -432,19 +444,26 @@ export default function ReportPage() {
                 [{index + 1}]
               </span>
               <span>{opt.title}</span>
-            </div>
+            </button>
           );
         })}
       </div>
 
       <div style={{ flexShrink: 0, width: '210px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={{ fontSize: '10px', color: '#4b5563', marginTop: '6px', marginBottom: '4px', lineHeight: '1.3', textAlign: 'center' }}>
+        <div tabIndex={0} style={{ fontSize: '10px', color: '#4b5563', marginTop: '6px', marginBottom: '4px', lineHeight: '1.3', textAlign: 'center' }}>
           <span><strong>[↑/2] [↓/5]</strong> {t.move} | <strong>[Enter]</strong> {t.send}</span>
         </div>
 
-        <div
+        {/* 🌟 更換為原生的 button 標籤 */}
+        <button
           onClick={handleCancel}
+          tabIndex={0}
+          aria-label={t.cancelBack}
           style={{
+            display: 'flex',
+            appearance: 'none',
+            outline: 'none',
+            fontFamily: 'inherit',
             cursor: 'pointer',
             width: '100%',
             boxSizing: 'border-box',
@@ -453,7 +472,6 @@ export default function ReportPage() {
             border: '1px solid #f87171',
             borderRadius: '4px',
             textAlign: 'left',
-            display: 'flex',
             alignItems: 'center',
           }}
         >
@@ -472,7 +490,7 @@ export default function ReportPage() {
           <span style={{ fontSize: '12px', color: '#991b1b', fontWeight: 'bold' }}>
             {t.cancelBack}
           </span>
-        </div>
+        </button>
       </div>
     </main>
   );

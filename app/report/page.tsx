@@ -15,7 +15,7 @@ const REPORT_OPTIONS = [
 
 export default function ReportPage() {
   const router = useRouter();
-  const { fetchLocation, loading, errorMsg } = useGeolocation({ watch: false, autoFetch: false });
+  const { fetchLocation, loading, errorMsg } = useGeolocation({autoFetch: false });
 
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [statusMessage, setStatusMessage] = useState('請使用上下鍵選擇，按 Enter 回報');
@@ -24,7 +24,7 @@ export default function ReportPage() {
   // 用來追蹤每一個選項的 DOM 元素，以便自動捲動
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // 🌟 當選中的索引改變時，自動將該項目捲動到可視範圍內
+  // 當選中的索引改變時，自動將該項目捲動到可視範圍內
   useEffect(() => {
     if (itemRefs.current[selectedIndex]) {
       itemRefs.current[selectedIndex]?.scrollIntoView({
@@ -86,7 +86,7 @@ export default function ReportPage() {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // 🌟 成功送出後，更新時間戳記（同時給冷卻鎖、以及左下角警示燈過濾用）
+        // 成功送出後，更新時間戳記（同時給冷卻鎖、以及左下角警示燈過濾用）
         localStorage.setItem('my_last_report_time', Date.now().toString());
         
         setStatusMessage(`回報成功！已記錄：${option.title}`);
@@ -151,27 +151,46 @@ export default function ReportPage() {
   }, [selectedIndex, isReporting, loading, router]);
 
   return (
-    <main style={{ padding: '6px', textAlign: 'center', backgroundColor: '#ffffff', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-      <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '6px', color: '#000000' }}>
-        狀況回報選單
-      </h2>
-
-      {/* 狀態提示區 */}
-      <div style={{ fontSize: '11px', color: isReporting || loading || statusMessage.includes('冷卻中') ? '#2563eb' : '#dc2626', marginBottom: '8px', fontWeight: 'bold' }}>
-        {loading ? 'GPS 定位中...' : statusMessage}
+    <main
+      style={{
+        width: '100%',
+        maxWidth: '240px',          // 最大寬度保護
+        height: '100vh',            // 滿版高度
+        maxHeight: '320px',         // 限制在功能機的最大高度內
+        margin: '0 auto',
+        overflow: 'hidden',         // 隱藏整頁的捲動，避免雙層捲軸
+        boxSizing: 'border-box',
+        padding: '6px',
+        display: 'flex',
+        flexDirection: 'column',    // 使用 flex 讓中間容器自動延展
+        alignItems: 'center',
+        backgroundColor: '#ffffff',
+        fontFamily: 'sans-serif',
+      }}
+    >
+      {/* 頂部狀態與提示區 (設定 flexShrink: 0 避免被壓縮) */}
+      <div style={{ flexShrink: 0, textAlign: 'center', width: '100%' }}>
+        <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '2px', color: '#000000' }}>
+          狀況回報選單
+        </h2>
+        <div style={{ fontSize: '11px', color: isReporting || loading || statusMessage.includes('冷卻中') ? '#2563eb' : '#dc2626', marginBottom: '6px', fontWeight: 'bold' }}>
+          {loading ? 'GPS 定位中...' : statusMessage}
+        </div>
       </div>
 
-      {/* 模擬手機大小的顯示容器 */}
+      {/* 模擬手機大小的顯示容器 (選單區) */}
       <div
         style={{
           width: '210px',
-          height: '110px',
-          margin: '0 auto',
-          overflowY: 'hidden',
+          flex: 1,                  // 自動填滿標題與底部按鈕之間的剩餘空間
+          overflowY: 'scroll',      // 允許捲動以配合 scrollIntoView
+          scrollbarWidth: 'none',   // 隱藏 Firefox 捲軸
+          msOverflowStyle: 'none',  // 隱藏 IE/Edge 捲軸
           border: '1px solid #d1d5db',
           borderRadius: '4px',
           backgroundColor: '#f9fafb',
           padding: '4px',
+          boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
           gap: '4px',
@@ -199,7 +218,8 @@ export default function ReportPage() {
                 cursor: 'pointer',
                 fontSize: '12px',
                 fontWeight: 'bold',
-                flexShrink: 0, 
+                flexShrink: 0, // 確保選項卡片不會被擠壓變形
+                boxSizing: 'border-box',
               }}
             >
               <span style={{ marginRight: '8px', opacity: 0.7 }}>[{index + 1}]</span>
@@ -209,30 +229,36 @@ export default function ReportPage() {
         })}
       </div>
 
-      {/* 按鍵操作指引 */}
-      <div style={{ fontSize: '10px', color: '#4b5563', marginTop: '6px', lineHeight: '1.3' }}>
-        <p><strong>[↑/2] [↓/5]</strong> 移動選擇</p>
-        <p><strong>[Enter]</strong> 確認送出回報</p>
-      </div>
+      {/* 底部按鍵指引與取消按鈕 (設定 flexShrink: 0 確保貼齊底部) */}
+      <div style={{ flexShrink: 0, width: '210px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        {/* 按鍵操作指引 */}
+        <div style={{ fontSize: '10px', color: '#4b5563', marginTop: '6px', marginBottom: '4px', lineHeight: '1.3', textAlign: 'center' }}>
+          <span><strong>[↑/2] [↓/5]</strong> 移動 | <strong>[Enter]</strong> 送出</span>
+        </div>
 
-      {/* 底部取消按鈕 */}
-      <div
-        style={{
-          marginTop: '8px',
-          width: '210px',
-          marginLeft: 'auto',
-          marginRight: 'auto',
-          padding: '4px 8px',
-          backgroundColor: '#fee2e2',
-          border: '1px solid #f87171',
-          borderRadius: '4px',
-          textAlign: 'left',
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        <span style={{ fontSize: '11px', fontWeight: 'bold', backgroundColor: '#dc2626', color: '#ffffff', padding: '1px 5px', borderRadius: '3px', marginRight: '8px' }}>[ 0 ]</span>
-        <span style={{ fontSize: '12px', color: '#991b1b', fontWeight: 'bold' }}>取消返回</span>
+        {/* 底部取消按鈕 */}
+        <div
+          onClick={handleCancel}
+          style={{
+            cursor: 'pointer',
+            width: '100%',
+            boxSizing: 'border-box',
+            padding: '4px 8px',
+            backgroundColor: '#fee2e2',
+            border: '1px solid #f87171',
+            borderRadius: '4px',
+            textAlign: 'left',
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
+          <span style={{ fontSize: '11px', fontWeight: 'bold', backgroundColor: '#dc2626', color: '#ffffff', padding: '1px 5px', borderRadius: '3px', marginRight: '8px' }}>
+            [ 0 ]
+          </span>
+          <span style={{ fontSize: '12px', color: '#991b1b', fontWeight: 'bold' }}>
+            取消返回
+          </span>
+        </div>
       </div>
     </main>
   );

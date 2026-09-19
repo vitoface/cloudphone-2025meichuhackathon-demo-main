@@ -352,7 +352,6 @@ export default function HomePage() {
         const marker = L.marker([userLocationRef.current.lat, userLocationRef.current.lng], {
           draggable: true 
         }).addTo(map);
-        marker.bindPopup('您的精確位置<br/>(可拖曳，或按 [7] 重新定於中心)');
         markerRef.current = marker;
 
         marker.on('dragend', function (e: any) {
@@ -439,7 +438,6 @@ export default function HomePage() {
 
         if (markerRef.current) {
           markerRef.current.setLatLng([center.lat, center.lng]);
-          markerRef.current.openPopup();
         }
       }
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGeolocation } from '@/component/useGeolocation';
+import ProximityAlert from '@/component/ProximityAlert'; // 🌟 引入左下角驚嘆號預警模組
 
 // 定義支援的 5 種事件代碼
 export type EventType = 
@@ -60,8 +61,11 @@ export default function HomePage() {
     lng: 120.9917,
   });
 
-  // 存放地圖事件
+  // 存放地圖事件 (畫圖層用)
   const [events, setEvents] = useState<TrafficEvent[]>([]);
+  
+  // 🌟 新增：存放 API 原始回報資料 (給左下角預警燈用)
+  const [cloudReports, setCloudReports] = useState<ApiMapInfoItem[]>([]);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -92,7 +96,7 @@ export default function HomePage() {
     }
   }, [geoCoords]);
 
-  // 五向射線道路探索（嚴重塞車、施工、車禍皆呼叫此函式抓取貼路幾何）
+  // 五向射線道路探索
   const fetchMultiRayRoads = async (lat: number, lng: number, radiusMeters: number): Promise<[number, number][][]> => {
     const r = radiusMeters || 30;
     const latDelta = r / 111000;
@@ -142,14 +146,11 @@ export default function HomePage() {
     eventLayerGroupRef.current.clearLayers();
 
     eventList.forEach((item) => {
-      
-
-      // 2. 發生車禍 (car_crash)：小範圍貼路（黑色）
       if (item.eventType === 'car_crash') {
         if (item.paths && item.paths.length > 0) {
           item.paths.forEach((roadCoords) => {
             const polyline = L.polyline(roadCoords, {
-              color: '#000000', // 🌟 黑色事故路段
+              color: '#000000', 
               weight: 5.5,
               opacity: 0.9,
               lineCap: 'round',
@@ -159,125 +160,73 @@ export default function HomePage() {
             polyline.addTo(eventLayerGroupRef.current);
           });
         }
-
-        // 中心點標記：黑心白邊
         const centerDot = L.circleMarker([item.lat, item.lng], {
-          radius: 4.5,
-          fillColor: '#000000',
-          color: '#ffffff',
-          weight: 1.5,
-          opacity: 1,
-          fillOpacity: 1,
+          radius: 4.5, fillColor: '#000000', color: '#ffffff', weight: 1.5, opacity: 1, fillOpacity: 1,
         });
         centerDot.bindPopup(`<b>💥 ${item.title}</b><br/>${item.description || ''}`);
         centerDot.addTo(eventLayerGroupRef.current);
       }
-      // 1. 嚴重塞車 (traffic_jam)：大範圍貼路（深紅色）
       
       else if (item.eventType === 'traffic_jam') {
         if (item.paths && item.paths.length > 0) {
           item.paths.forEach((roadCoords) => {
             const polyline = L.polyline(roadCoords, {
-              color: '#b91c1c', // 深紅
-              weight: 5,
-              opacity: 0.85,
-              lineCap: 'round',
-              lineJoin: 'round',
+              color: '#b91c1c', weight: 5, opacity: 0.85, lineCap: 'round', lineJoin: 'round',
             });
             polyline.bindPopup(`<b>🚗 ${item.title}</b><br/>${item.description || ''}`);
             polyline.addTo(eventLayerGroupRef.current);
           });
         }
-
         const centerDot = L.circleMarker([item.lat, item.lng], {
-          radius: 4.5,
-          fillColor: '#991b1b',
-          color: '#ffffff',
-          weight: 1.5,
-          opacity: 1,
-          fillOpacity: 1,
+          radius: 4.5, fillColor: '#991b1b', color: '#ffffff', weight: 1.5, opacity: 1, fillOpacity: 1,
         });
         centerDot.bindPopup(`<b>🚗 ${item.title}</b><br/>${item.description || ''}`);
         centerDot.addTo(eventLayerGroupRef.current);
       }
 
-      // 3. 道路施工 (roadwork)：中範圍貼路（亮橘色）
       else if (item.eventType === 'roadwork') {
         if (item.paths && item.paths.length > 0) {
           item.paths.forEach((roadCoords) => {
             const polyline = L.polyline(roadCoords, {
-              color: '#ea580c', // 亮橘色
-              weight: 5,
-              opacity: 0.85,
-              lineCap: 'round',
-              lineJoin: 'round',
+              color: '#ea580c', weight: 5, opacity: 0.85, lineCap: 'round', lineJoin: 'round',
             });
             polyline.bindPopup(`<b>🚧 ${item.title}</b><br/>${item.description || ''}`);
             polyline.addTo(eventLayerGroupRef.current);
           });
         }
-
         const centerDot = L.circleMarker([item.lat, item.lng], {
-          radius: 4.5,
-          fillColor: '#ea580c',
-          color: '#ffffff',
-          weight: 1.5,
-          opacity: 1,
-          fillOpacity: 1,
+          radius: 4.5, fillColor: '#ea580c', color: '#ffffff', weight: 1.5, opacity: 1, fillOpacity: 1,
         });
         centerDot.bindPopup(`<b>🚧 ${item.title}</b><br/>${item.description || ''}`);
         centerDot.addTo(eventLayerGroupRef.current);
       }
 
-      // 4. 自然災害 (natural_disaster)：紫色警戒圈
       else if (item.eventType === 'natural_disaster') {
         const circle = L.circle([item.lat, item.lng], {
-          color: '#7c3aed',
-          fillColor: '#8b5cf6',
-          fillOpacity: 0.55,
-          radius: item.radius || 35,
-          weight: 3,
+          color: '#7c3aed', fillColor: '#8b5cf6', fillOpacity: 0.55, radius: item.radius || 35, weight: 3,
         });
         circle.bindPopup(`<b>⚠️ ${item.title}</b><br/>${item.description || ''}`);
         circle.addTo(eventLayerGroupRef.current);
-
         const disasterDot = L.circleMarker([item.lat, item.lng], {
-          radius: 4.5,
-          fillColor: '#7c3aed',
-          color: '#ffffff',
-          weight: 1.5,
-          opacity: 1,
-          fillOpacity: 1,
+          radius: 4.5, fillColor: '#7c3aed', color: '#ffffff', weight: 1.5, opacity: 1, fillOpacity: 1,
         });
         disasterDot.addTo(eventLayerGroupRef.current);
       }
 
-      // 5. 不明危險 (unknown_danger)：深黃色警戒圈
       else {
         const circle = L.circle([item.lat, item.lng], {
-          color: '#ca8a04',
-          fillColor: '#eab308',
-          fillOpacity: 0.5,
-          radius: item.radius || 30,
-          weight: 2.5,
+          color: '#ca8a04', fillColor: '#eab308', fillOpacity: 0.5, radius: item.radius || 30, weight: 2.5,
         });
         circle.bindPopup(`<b>⚠️ ${item.title}</b><br/>${item.description || ''}`);
         circle.addTo(eventLayerGroupRef.current);
-
         const dangerDot = L.circleMarker([item.lat, item.lng], {
-          radius: 4,
-          fillColor: '#ca8a04',
-          color: '#ffffff',
-          weight: 1.5,
-          opacity: 1,
-          fillOpacity: 1,
+          radius: 4, fillColor: '#ca8a04', color: '#ffffff', weight: 1.5, opacity: 1, fillOpacity: 1,
         });
         dangerDot.addTo(eventLayerGroupRef.current);
       }
     });
   };
 
-  // 解析並比對 5 種事件類型與其半徑範圍
   const parseEventType = (
     title: string, 
     eventsField: string
@@ -285,23 +234,10 @@ export default function HomePage() {
     const t = title.trim();
     const e = eventsField.trim().toLowerCase();
 
-    // 1. 嚴重塞車：大範圍貼路 (45 公尺)
-    if (t.includes('塞車') || e === 'traffic_jam' || e === 'traffic') {
-      return { type: 'traffic_jam', displayTitle: '嚴重塞車', radius: 45 };
-    }
-    // 2. 發生車禍：極小範圍貼路 (16 公尺)
-    if (t.includes('車禍') || e === 'car_crash' || e === 'accident') {
-      return { type: 'car_crash', displayTitle: '發生車禍', radius: 8 };
-    }
-    // 3. 道路施工：中範圍貼路 (28 公尺，介於車禍與塞車之間)
-    if (t.includes('施工') || e === 'roadwork') {
-      return { type: 'roadwork', displayTitle: '道路施工', radius: 28 };
-    }
-    // 4. 自然災害：圓圈警戒 (35 公尺)
-    if (t.includes('災害') || e === 'natural_disaster') {
-      return { type: 'natural_disaster', displayTitle: '自然災害', radius: 35 };
-    }
-    // 5. 不明危險（預設圓圈警戒 30 公尺）
+    if (t.includes('塞車') || e === 'traffic_jam' || e === 'traffic') return { type: 'traffic_jam', displayTitle: '嚴重塞車', radius: 45 };
+    if (t.includes('車禍') || e === 'car_crash' || e === 'accident') return { type: 'car_crash', displayTitle: '發生車禍', radius: 8 };
+    if (t.includes('施工') || e === 'roadwork') return { type: 'roadwork', displayTitle: '道路施工', radius: 28 };
+    if (t.includes('災害') || e === 'natural_disaster') return { type: 'natural_disaster', displayTitle: '自然災害', radius: 35 };
     return { type: 'unknown_danger', displayTitle: t || '不明危險', radius: 30 };
   };
 
@@ -312,10 +248,12 @@ export default function HomePage() {
       if (!res.ok) return;
 
       const apiData: ApiMapInfoItem[] = await res.json();
+      
+      // 🌟 將原始資料存起來，提供給左下角警示燈模組
+      setCloudReports(apiData);
 
       const mappedEvents: TrafficEvent[] = apiData.map((item, idx) => {
         const { type, displayTitle, radius } = parseEventType(item.title || '', item.events || '');
-
         const uniqueKey = `ev-${item.latitude.toFixed(5)}-${item.longtitude.toFixed(5)}-${idx}`;
         const existingEvent = currentEvents.find((e) => e.key === uniqueKey);
 
@@ -331,7 +269,6 @@ export default function HomePage() {
         };
       });
 
-      // 塞車、施工、車禍皆需要向 OSRM 抓取貼路幾何
       const roadNeedTypes: EventType[] = ['traffic_jam', 'roadwork', 'car_crash'];
 
       const resolvedEvents = await Promise.all(
@@ -353,7 +290,6 @@ export default function HomePage() {
     }
   };
 
-  // 初次載入
   useEffect(() => {
     fetchAndProcessEvents([]);
   }, []);
@@ -370,7 +306,6 @@ export default function HomePage() {
   // 5. 初始化 Leaflet
   useEffect(() => {
     const mapContainer = mapContainerRef.current;
-
     if (!mapContainer) return;
 
     let isMounted = true;
@@ -414,7 +349,6 @@ export default function HomePage() {
 
         mapInstanceRef.current = map;
 
-        // 使用者位置大頭針
         const marker = L.marker([userLocationRef.current.lat, userLocationRef.current.lng], {
           draggable: true 
         }).addTo(map);
@@ -455,7 +389,7 @@ export default function HomePage() {
     };
   }, [updateLocation]);
 
-  // 6. 按鍵控制支援（QVGA 螢幕相容）
+  // 6. 按鍵控制支援
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === '8') {
@@ -496,7 +430,6 @@ export default function HomePage() {
         map.panBy([panDistance, 0], { animate: true });
       }
 
-      // [7] 鍵：將大頭針設定在地圖目前的中心點
       if (e.key === '7') {
         e.preventDefault();
         const center = map.getCenter();
@@ -510,7 +443,6 @@ export default function HomePage() {
         }
       }
 
-      // [0] 鍵：回歸自身目前位置
       if (e.key === '0') {
         e.preventDefault();
         map.panTo([userLocationRef.current.lat, userLocationRef.current.lng], { animate: true });
@@ -530,15 +462,16 @@ export default function HomePage() {
         即時路況定位 (道路貼合)
       </h2>
 
-      <div>
+      {/* 🌟 建立 220px 寬度的置中容器，讓預警燈能夠正確對齊邊界 */}
+      <div style={{ position: 'relative', width: '220px', margin: '0 auto' }}>
+        
         <div
           ref={mapContainerRef}
           style={{
-            width: '220px',
+            width: '100%', 
             height: '140px',
             borderRadius: '6px',
             border: '1px solid #d1d5db',
-            margin: '0 auto',
             position: 'relative',
             overflow: 'hidden',
             zIndex: 1,
@@ -571,6 +504,13 @@ export default function HomePage() {
             {geoError && <span style={{ color: '#dc2626' }}> ({geoError})</span>}
           </p>
         </div>
+
+        {/* 🌟 預警模組放在此 220px 容器的最底層，配合 absolute 定位就能完美對齊左下角 */}
+        <ProximityAlert 
+          location={userLocationRef.current} 
+          reports={cloudReports} 
+        />
+        
       </div>
     </main>
   );

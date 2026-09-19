@@ -111,11 +111,35 @@ export async function POST(request: Request) {
       );
     }
 
+    const { data: data_his, error: error_his } = await supabase
+      .from("MapInfo_history")
+      .insert({
+        longtitude: lng,
+        latitude: lat,
+        title,
+        description: description ?? null,
+        events: events ?? null,
+      })
+      .select()
+      .single();
+
+    if (error_his) {
+      console.error("Supabase insert error:", error_his);
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: error_his.message,
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
       {
         success: true,
         message: "Map info created successfully",
-        data,
+        data
       },
       { status: 201 }
     );

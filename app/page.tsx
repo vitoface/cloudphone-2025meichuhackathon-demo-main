@@ -178,8 +178,6 @@ export default function HomePage() {
   const hasInitializedCenterRef = useRef<boolean>(false);
 
   useEffect(() => {
-    console.log('[HomePage] useEffect: detectLanguageAndNetwork');
-    console.log('[HomePage] navigator.language:', navigator.language);
     if (typeof window !== 'undefined') {
       const navLang = navigator.language.split('-')[0].toLowerCase();
       if (navigator.language.toLowerCase().startsWith('zh')) {
@@ -195,7 +193,6 @@ export default function HomePage() {
   const t = translations[langCode as keyof typeof translations] || translations['zh'];
 
   const getLocalizedEventTitle = (type: EventType) => {
-    console.log('[HomePage] getLocalizedEventTitle', { type });
     switch (type) {
       case 'traffic_jam': return t.evtJam;
       case 'car_crash': return t.evtCrash;
@@ -206,7 +203,6 @@ export default function HomePage() {
   };
 
   const getDistanceMetersFast = (lat1: number, lng1: number, lat2: number, lng2: number) => {
-    console.log('[HomePage] getDistanceMetersFast', { lat1, lng1, lat2, lng2 });
     const R = 6371000;
     const x = (lng2 - lng1) * Math.PI / 180 * Math.cos((lat1 + lat2) / 2 * Math.PI / 180);
     const y = (lat2 - lat1) * Math.PI / 180;
@@ -214,7 +210,6 @@ export default function HomePage() {
   };
 
   const drawNavRoute = (path: [number, number][]) => {
-    console.log('[HomePage] drawNavRoute', { pointCount: path.length });
     const map = mapInstanceRef.current;
     const L = leafletRef.current;
     if (!map || !L) return;
@@ -239,11 +234,6 @@ export default function HomePage() {
     destination: { lat: number; lng: number },
     currentEvents: TrafficEvent[]
   ) => {
-    console.log('[HomePage] planSafeNavigation', {
-      start,
-      destination,
-      eventCount: currentEvents.length,
-    });
     if (getDistanceMetersFast(start.lat, start.lng, destination.lat, destination.lng) < 10) {
       setNavStatus(t.navArrived);
       if (navLayerGroupRef.current) navLayerGroupRef.current.clearLayers();
@@ -304,7 +294,6 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    console.log('[HomePage] useEffect: syncInitialGeolocation', { geoCoords });
     if (geoCoords && !hasInitializedCenterRef.current) {
       userLocationRef.current = geoCoords;
 
@@ -324,7 +313,6 @@ export default function HomePage() {
   }, [geoCoords]);
 
   const fetchMultiRayRoads = async (lat: number, lng: number, radiusMeters: number): Promise<[number, number][][]> => {
-    console.log('[HomePage] fetchMultiRayRoads', { lat, lng, radiusMeters });
     const r = radiusMeters || 30;
     const latDelta = r / 111000;
     const lngDelta = r / (111000 * Math.cos((lat * Math.PI) / 180));
@@ -364,13 +352,6 @@ export default function HomePage() {
   };
 
   const drawLayers = (eventList: TrafficEvent[]) => {
-    console.log('[HomePage] drawLayers', {
-      eventCount: eventList.length,
-      hasMap: Boolean(mapInstanceRef.current),
-      hasLeaflet: Boolean(leafletRef.current),
-      hasEventLayerGroup: Boolean(eventLayerGroupRef.current),
-    });
-    console.log("drawLayers")
     const map = mapInstanceRef.current;
     const L = leafletRef.current;
     if (!map || !L) return;
@@ -448,16 +429,12 @@ export default function HomePage() {
 
   // 🌟【關鍵修復 1】：當 events 資料就緒且地圖與 Leaflet 已載入時，立即自動重繪
   useEffect(() => {
-    console.log('[HomePage] useEffect: redrawLayersForEvents', {
-      eventCount: events.length,
-    });
     if (events.length > 0 && mapInstanceRef.current && leafletRef.current) {
       drawLayers(events);
     }
   }, [events]);
 
   useEffect(() => {
-    console.log('[HomePage] useEffect: redrawLayersForLanguage', { langCode });
     if (eventsRef.current.length > 0) {
       drawLayers(eventsRef.current);
     }
@@ -469,7 +446,6 @@ export default function HomePage() {
     title: string, 
     eventsField: string
   ): { type: EventType; radius: number } => {
-    console.log('[HomePage] parseEventType', { title, eventsField });
     const t_str = title.trim();
     const e_str = eventsField.trim().toLowerCase();
 
@@ -481,17 +457,11 @@ export default function HomePage() {
   };
 
   const fetchAndProcessEvents = async (currentEvents: TrafficEvent[]) => {
-    console.log('[HomePage] fetchAndProcessEvents:start', {
-      currentEventCount: currentEvents.length,
-    });
     try {
       const res = await fetch('/api/mapinfo');
       if (!res.ok) return;
 
       const apiData: ApiMapInfoItem[] = await res.json();
-      console.log('[HomePage] fetchAndProcessEvents:mapInfoReceived', {
-        reportCount: apiData.length,
-      });
       setCloudReports(apiData);
 
       const mappedEvents: TrafficEvent[] = apiData.map((item, idx) => {
@@ -525,10 +495,6 @@ export default function HomePage() {
         })
       );
 
-      console.log('[HomePage] fetchAndProcessEvents:roadsResolved', {
-        eventCount: resolvedEvents.length,
-      });
-
       setEvents(resolvedEvents);
       drawLayers(resolvedEvents);
 
@@ -541,7 +507,6 @@ export default function HomePage() {
   };
 
   const syncOfflineReports = async () => {
-    console.log('[HomePage] syncOfflineReports');
     if (typeof window === 'undefined' || isSyncingRef.current) return;
 
     const raw = localStorage.getItem('offline_reports');
@@ -606,22 +571,20 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    console.log('[HomePage] useEffect: startEventPollingAndOfflineSync');
     fetchAndProcessEvents([]);
     syncOfflineReports();
 
     const interval = setInterval(() => {
-      console.log('[HomePage] interval: refreshEventsAndOfflineReports');
       fetchAndProcessEvents(eventsRef.current);
       syncOfflineReports();
     }, 4000);
 
     const handleOnline = () => {
-      console.log('[HomePage] handleOnline');
+      setIsOnline(true);
       syncOfflineReports();
     };
     const handleOffline = () => {
-      console.log('[HomePage] handleOffline');
+      setIsOnline(false);
     };
 
     window.addEventListener('online', handleOnline);
@@ -635,7 +598,6 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    console.log('[HomePage] useEffect: prefetchRoutes');
     router.prefetch('/analysis');
     router.prefetch('/report');
     router.prefetch('/list');
@@ -643,15 +605,12 @@ export default function HomePage() {
 
   // 初始化 Leaflet
   useEffect(() => {
-    console.log('[HomePage] useEffect: initializeLeaflet');
-
     const mapContainer = mapContainerRef.current;
     if (!mapContainer) return;
 
     let isMounted = true;
 
     import('leaflet').then((L) => {
-      console.log('[HomePage] initializeLeaflet: moduleLoaded');
       if (!isMounted) return;
       leafletRef.current = L;
 
@@ -663,7 +622,6 @@ export default function HomePage() {
       });
 
       if (!mapInstanceRef.current) {
-        console.log('[HomePage] initializeLeaflet: createMap');
         const savedLat = sessionStorage.getItem('map_last_lat');
         const savedLng = sessionStorage.getItem('map_last_lng');
         const savedZoom = sessionStorage.getItem('map_last_zoom');
@@ -739,7 +697,6 @@ export default function HomePage() {
     });
 
     return () => {
-      console.log('[HomePage] useEffect cleanup: initializeLeaflet');
       isMounted = false;
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
@@ -750,9 +707,7 @@ export default function HomePage() {
 
   // 按鍵控制
   useEffect(() => {
-    console.log('[HomePage] useEffect: registerKeyboardControls');
     const handleKeyDown = (e: KeyboardEvent) => {
-      console.log('[HomePage] handleKeyDown', { key: e.key });
       if (e.key === '#') {
         e.preventDefault();
         router.push('/analysis');

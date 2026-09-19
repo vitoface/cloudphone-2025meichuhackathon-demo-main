@@ -1,6 +1,8 @@
+import 'leaflet/dist/leaflet.css'; // 確保 Leaflet 樣式第一優先被載入
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

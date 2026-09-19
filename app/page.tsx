@@ -1,19 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function HomePage() {
-  // 使用者真實 GPS 定位 (固定 Marker 用)
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-  // 地圖視野中心點 (按鍵 2, 4, 5, 6 平移用)
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
-  // 縮放級別 (10 ~ 19)
-  const [zoom, setZoom] = useState<number>(15);
+  const [currentZoom, setCurrentZoom] = useState<number>(15);
 
-  const GEOAPIFY_API_KEY = '912286ec590d4b4daa1d0f4a22f38420';
+  // 用於掛載地圖 DOM 與儲存 Leaflet 物件實例
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
 
+  // 1. 取得 GPS 定位
   const fetchLocation = () => {
     setLoading(true);
     setErrorMsg('');
@@ -31,7 +31,6 @@ export default function HomePage() {
           lng: position.coords.longitude,
         };
         setLocation(coords);
-        setMapCenter(coords); // 初始化時地圖中心等於使用者所在位置
         setLoading(false);
       },
       (error) => {
@@ -63,56 +62,118 @@ export default function HomePage() {
     fetchLocation();
   }, []);
 
-  // 監聽實體按鍵操作
+  // 2. 初始化 Leaflet 動態地圖
+  useEffect(() => {
+    if (!location || !mapContainerRef.current) return;
+
+    let isMounted = true;
+
+    // 動態載入 Leaflet，規避 SSR window 報錯
+    import('leaflet').then((L) => {
+      if (!isMounted) return;
+
+      // 修正 Leaflet 預設 Marker 圖示在 Next.js 中的路徑缺失問題
+      delete (L.Icon.Default.prototype as any)._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      });
+
+      // 初始化 Map（禁用預設縮放按鈕與觸控拖曳以符合按鍵機純物理控制）
+      if (!mapInstanceRef.current) {
+        const map = L.map(mapContainerRef.current, {
+          center: [location.lat, location.lng],
+          zoom: 15,
+          zoomControl: false,
+          dragging: false,
+          touchZoom: false,
+          doubleClickZoom: false,
+          scrollWheelZoom: false,
+        });
+
+        // 串接 OpenStreetMap 圖層串流
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap',
+        }).addTo(map);
+
+        // 釘選真實 GPS 定位紅點標記
+        const marker = L.marker([location.lat, location.lng]).addTo(map);
+        marker.bindPopup('您的目前位置');
+
+        mapInstanceRef.current = map;
+        // 確保 DOM 渲染完畢後 Leaflet 正確對齊容器尺寸
+        setTimeout(() => {
+          map.invalidateSize();
+        }, 100);
+        markerRef.current = marker;
+
+        map.on('zoomend', () => {
+          setCurrentZoom(map.getZoom());
+        });
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [location]);
+
+  // 3. 監聽實體按鍵控制地圖（縮放、平移與回中心）
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // 根據當前縮放層級計算平移步長（越放大，經緯度變化量越細緻）
-      const step = 0.0003 * Math.pow(2, 15 - zoom);
+      const map = mapInstanceRef.current;
+      if (!map) return;
 
-      // 1. 縮放控制：[↑ / 1] 放大，[↓ / 3] 縮小
+      // 像素平移距離（每次平移 40px，在 QVGA 240 寬度下移動約 1/6 螢幕）
+      const panDistance = 40;
+
+      // 縮放：[↑ / 1] 放大，[↓ / 3] 縮小
       if (e.key === 'ArrowUp' || e.key === '1') {
         e.preventDefault();
-        setZoom((prev) => Math.min(prev + 1, 19));
+        map.zoomIn();
       } else if (e.key === 'ArrowDown' || e.key === '3') {
         e.preventDefault();
-        setZoom((prev) => Math.max(prev - 1, 10));
+        map.zoomOut();
       }
 
-      // 2. 地圖視野移動：[2] 上移、[5] 下移、[4] 左移、[6] 右移
+      // 視野平移：[2] 上移、[5] 下移、[4] 左移、[6] 右移
       if (e.key === '2') {
         e.preventDefault();
-        setMapCenter((prev) => (prev ? { ...prev, lat: prev.lat + step } : null));
+        map.panBy([0, -panDistance], { animate: true });
       } else if (e.key === '5') {
         e.preventDefault();
-        setMapCenter((prev) => (prev ? { ...prev, lat: prev.lat - step } : null));
+        map.panBy([0, panDistance], { animate: true });
       } else if (e.key === '4') {
         e.preventDefault();
-        setMapCenter((prev) => (prev ? { ...prev, lng: prev.lng - step } : null));
+        map.panBy([-panDistance, 0], { animate: true });
       } else if (e.key === '6') {
         e.preventDefault();
-        setMapCenter((prev) => (prev ? { ...prev, lng: prev.lng + step } : null));
+        map.panBy([panDistance, 0], { animate: true });
       }
 
-      // 3. 快捷重設中心：按 [0] 快速回到使用者當前 GPS 座標
+      // [0] 快速回到使用者 GPS 中心點
       if (e.key === '0') {
         e.preventDefault();
-        if (location) setMapCenter(location);
+        if (location) {
+          map.panTo([location.lat, location.lng], { animate: true });
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [zoom, location]);
-
-  // center 帶入動態平移的 mapCenter，marker 依舊釘在真實的 location
-  const mapImageUrl = mapCenter && location
-    ? `https://maps.geoapify.com/v1/staticmap?style=osm-bright&width=220&height=130&center=lonlat:${mapCenter.lng},${mapCenter.lat}&zoom=${zoom}&marker=lonlat:${location.lng},${location.lat};color:%23ff0000;size:medium&apiKey=${GEOAPIFY_API_KEY}`
-    : '';
+  }, [location]);
 
   return (
     <main style={{ padding: '6px', textAlign: 'center', backgroundColor: '#ffffff', minHeight: '100vh' }}>
       <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px', color: '#000000' }}>
-        即時路況定位
+        即時路況定位 (Leaflet)
       </h2>
 
       {loading && <p style={{ fontSize: '12px', color: '#333333' }}>正在取得 GPS 定位中...</p>}
@@ -137,24 +198,26 @@ export default function HomePage() {
         </div>
       )}
 
-      {location && mapCenter && (
+      {location && (
         <div>
-          <img
-            src={mapImageUrl}
-            alt="即時路況街道地圖"
+          {/* Leaflet 渲染容器（適配按鍵機 240x320 螢幕） */}
+          <div
+            ref={mapContainerRef}
             style={{
               width: '220px',
-              height: '130px',
+              height: '140px',
               borderRadius: '6px',
               border: '1px solid #d1d5db',
-              display: 'block',
               margin: '0 auto',
+              position: 'relative', // 確保子圖磚以這個框框為基準
+              overflow: 'hidden',   // 避免圖磚超出框線
+              zIndex: 1,
             }}
           />
 
-          {/* 操作指引（專為 240x320 小螢幕排版優化） */}
+          {/* 按鍵指引提示 */}
           <div style={{ fontSize: '10px', color: '#374151', marginTop: '6px', lineHeight: '1.4' }}>
-            <p><strong>[1/↑]</strong> 放大 | <strong>[3/↓]</strong> 縮小 (級別: {zoom})</p>
+            <p><strong>[1/↑]</strong> 放大 | <strong>[3/↓]</strong> 縮小 (級別: {currentZoom})</p>
             <p><strong>[2/4/5/6]</strong> 上左下右移 | <strong>[0]</strong> 回中心</p>
           </div>
 

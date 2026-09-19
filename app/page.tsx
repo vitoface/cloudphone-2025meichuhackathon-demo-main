@@ -267,7 +267,9 @@ export default function HomePage() {
 
   // 5. 初始化 Leaflet
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    const mapContainer = mapContainerRef.current;
+
+    if (!mapContainer) return;
 
     let isMounted = true;
 
@@ -293,7 +295,7 @@ export default function HomePage() {
 
         const initialZoom = savedZoom ? parseInt(savedZoom, 10) : 17;
 
-        const map = L.map(mapContainerRef.current, {
+        const map = L.map(mapContainer, {
           center: initialCenter,
           zoom: initialZoom,
           zoomControl: false,

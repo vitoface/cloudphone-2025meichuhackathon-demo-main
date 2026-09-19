@@ -139,7 +139,6 @@ export default function HomePage() {
   const router = useRouter();
   const [langCode, setLangCode] = useState<string>('zh');
 
-  const [isOnline, setIsOnline] = useState<boolean>(true);
   const [pendingSyncCount, setPendingSyncCount] = useState<number>(0);
   const isSyncingRef = useRef<boolean>(false);
 
@@ -190,7 +189,6 @@ export default function HomePage() {
       } else {
         setLangCode('en');
       }
-      setIsOnline(navigator.onLine);
     }
   }, []);
 
@@ -494,7 +492,6 @@ export default function HomePage() {
       console.log('[HomePage] fetchAndProcessEvents:mapInfoReceived', {
         reportCount: apiData.length,
       });
-      setIsOnline(true);
       setCloudReports(apiData);
 
       const mappedEvents: TrafficEvent[] = apiData.map((item, idx) => {
@@ -540,7 +537,6 @@ export default function HomePage() {
       }
     } catch (error) {
       console.error('[HomePage] fetchAndProcessEvents:error', error);
-      setIsOnline(false);
     }
   };
 
@@ -592,7 +588,6 @@ export default function HomePage() {
           remaining.push(item);
         }
       } catch {
-        setIsOnline(false);
         remaining.push(...queue.slice(i));
         break;
       }
@@ -601,7 +596,6 @@ export default function HomePage() {
     if (remaining.length === 0) {
       localStorage.removeItem('offline_reports');
       setPendingSyncCount(0);
-      setIsOnline(true);
       fetchAndProcessEvents(eventsRef.current);
     } else {
       localStorage.setItem('offline_reports', JSON.stringify(remaining));
@@ -624,12 +618,10 @@ export default function HomePage() {
 
     const handleOnline = () => {
       console.log('[HomePage] handleOnline');
-      setIsOnline(true);
       syncOfflineReports();
     };
     const handleOffline = () => {
       console.log('[HomePage] handleOffline');
-      setIsOnline(false);
     };
 
     window.addEventListener('online', handleOnline);
@@ -884,20 +876,20 @@ export default function HomePage() {
           {t.title}
         </h2>
 
-        {(!isOnline || pendingSyncCount > 0) && (
+        {(pendingSyncCount > 0) && (
           <div
             style={{
               fontSize: '9px',
-              backgroundColor: isOnline ? '#fef3c7' : '#fee2e2',
-              color: isOnline ? '#92400e' : '#991b1b',
+              backgroundColor: '#fee2e2',
+              color: '#991b1b',
               padding: '1px 4px',
               borderRadius: '3px',
               fontWeight: 'bold',
               marginBottom: '2px',
-              border: `1px solid ${isOnline ? '#fcd34d' : '#fca5a5'}`
+              border: `1px solid ${'#fca5a5'}`
             }}
           >
-            {!isOnline ? `⚠️ 離線狀態 (待同步: ${pendingSyncCount})` : `🔄 連線恢復：自動同步中 (${pendingSyncCount})`}
+            {`🔄 連線恢復：自動同步中 (${pendingSyncCount})`}
           </div>
         )}
       </div>

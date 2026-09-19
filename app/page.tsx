@@ -179,6 +179,7 @@ export default function HomePage() {
   const hasInitializedCenterRef = useRef<boolean>(false);
 
   useEffect(() => {
+    console.log(navigator.language)
     if (typeof window !== 'undefined') {
       const navLang = navigator.language.split('-')[0].toLowerCase();
       if (navigator.language.toLowerCase().startsWith('zh')) {

@@ -710,7 +710,7 @@ export default function HomePage() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === '#') {
         e.preventDefault();
-        router.push('/analysis');
+        router.push('/ai');
         return;
       }
       if (e.key === '8') {

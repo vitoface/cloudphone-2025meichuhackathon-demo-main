@@ -18,7 +18,9 @@ const translations = {
     noEvents: '周遭暫無突發路況',
     coord: '座標',
     back: '返回地圖',
+    backLabel: '按數字鍵 0，返回地圖',
     distPrefix: '距離',
+    unitKm: '公里',
     evtCrash: { label: '發生車禍', prefix: '[嚴重]' },
     evtJam: { label: '嚴重塞車', prefix: '[提醒]' },
     evtWork: { label: '道路施工', prefix: '[注意]' },
@@ -34,7 +36,9 @@ const translations = {
     noEvents: 'No events nearby',
     coord: 'Coord',
     back: 'Back to Map',
+    backLabel: 'Press 0 to go back to Map',
     distPrefix: 'Dist',
+    unitKm: 'km',
     evtCrash: { label: 'Car Crash', prefix: '[Severe]' },
     evtJam: { label: 'Traffic Jam', prefix: '[Alert]' },
     evtWork: { label: 'Roadwork', prefix: '[Notice]' },
@@ -50,7 +54,9 @@ const translations = {
     noEvents: 'لا توجد أحداث',
     coord: 'إحداثيات',
     back: 'رجوع للخريطة',
+    backLabel: 'اضغط 0 للرجوع للخريطة',
     distPrefix: 'بعد',
+    unitKm: 'كم',
     evtCrash: { label: 'حادث سير', prefix: '[شديد]' },
     evtJam: { label: 'ازدحام', prefix: '[تنبيه]' },
     evtWork: { label: 'أعمال طرق', prefix: '[ملاحظة]' },
@@ -66,7 +72,9 @@ const translations = {
     noEvents: 'Aucun événement',
     coord: 'Coord',
     back: 'Retour carte',
+    backLabel: 'Appuyez sur 0 pour revenir',
     distPrefix: 'Dist',
+    unitKm: 'km',
     evtCrash: { label: 'Accident', prefix: '[Grave]' },
     evtJam: { label: 'Bouchon', prefix: '[Alerte]' },
     evtWork: { label: 'Travaux', prefix: '[Info]' },
@@ -82,7 +90,9 @@ const translations = {
     noEvents: 'Sem eventos',
     coord: 'Coord',
     back: 'Voltar ao Mapa',
+    backLabel: 'Pressione 0 para voltar',
     distPrefix: 'Dist',
+    unitKm: 'km',
     evtCrash: { label: 'Acidente', prefix: '[Grave]' },
     evtJam: { label: 'Congestão', prefix: '[Alerta]' },
     evtWork: { label: 'Obras', prefix: '[Aviso]' },
@@ -98,7 +108,9 @@ const translations = {
     noEvents: 'Không có sự kiện',
     coord: 'Tọa độ',
     back: 'Về Bản đồ',
+    backLabel: 'Nhấn phím 0 để về Bản đồ',
     distPrefix: 'Cách',
+    unitKm: 'km',
     evtCrash: { label: 'Tai nạn', prefix: '[Nghiêm trọng]' },
     evtJam: { label: 'Tắc đường', prefix: '[Báo động]' },
     evtWork: { label: 'Thi công', prefix: '[Lưu ý]' },
@@ -114,7 +126,9 @@ const translations = {
     noEvents: 'Babu alama',
     coord: 'Tsari',
     back: 'Koma Taswira',
+    backLabel: 'Danna 0 don komawa',
     distPrefix: 'Nisa',
+    unitKm: 'km',
     evtCrash: { label: 'Hatsari', prefix: '[Tsananin]' },
     evtJam: { label: 'Cunkoso', prefix: '[Gargaɗi]' },
     evtWork: { label: 'Aiki', prefix: '[Lura]' },
@@ -130,7 +144,9 @@ const translations = {
     noEvents: 'Hakuna matukio',
     coord: 'Kuratibu',
     back: 'Rudi Ramani',
+    backLabel: 'Bonyeza 0 kurudi',
     distPrefix: 'Umbali',
+    unitKm: 'km',
     evtCrash: { label: 'Ajali', prefix: '[Kubwa]' },
     evtJam: { label: 'Msongamano', prefix: '[Tahadhari]' },
     evtWork: { label: 'Ujenzi', prefix: '[Taarifa]' },
@@ -315,6 +331,7 @@ export default function ListPage() {
       {/* 模擬手機大小的顯示容器 (列表區) */}
       <div
         ref={scrollRef}
+        aria-live="polite" // 🌟 關鍵 3：當內容變化時，系統朗讀新狀態
         style={{
           width: '210px',           // 與圖二相同的 210px 寬度
           flex: 1,                  // 自動填滿標題與底部按鈕之間的剩餘空間
@@ -339,13 +356,21 @@ export default function ListPage() {
             {t.noEvents}
           </div>
         ) : (
-          events.map((item) => {
+          events.map((item, index) => {
             const config = getEventConfig(item.events || '');
 
+            // 準備給支援 ARIA 的引擎讀的完美白話文
+            const distText = item.distance ? `，${t.distPrefix} ${item.distance.toFixed(1)} ${t.unitKm}` : '';
+            const speakText = `第 ${index + 1} 筆，${config.label}${distText}`;
+
             return (
-              <div
+              // 🌟 關鍵修改：將 div 改為 button，並確保樣式被重置，完美兼容 Kingvoice
+              <button
                 key={item.id}
+                tabIndex={0} // 🌟 關鍵 1：讓上下鍵可以 Focus 到這張卡片
+                aria-label={speakText} // 🌟 關鍵 2：朗讀優先文案
                 style={{
+                  display: 'block',     // 確保按鈕表現像區塊元素
                   width: '100%',
                   boxSizing: 'border-box',
                   padding: '6px 8px',
@@ -354,6 +379,10 @@ export default function ListPage() {
                   borderRadius: '4px',
                   textAlign: 'left',
                   flexShrink: 0, // 確保卡片不會因為 flex 空間不夠而被擠壓變形
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  appearance: 'none',
+                  outline: 'none',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
@@ -369,16 +398,22 @@ export default function ListPage() {
                 <div style={{ fontSize: '11px', color: '#4b5563' }}>
                   {item.description || `${t.coord}: ${item.latitude.toFixed(3)}, ${item.longtitude.toFixed(3)}`}
                 </div>
-              </div>
+              </button>
             );
           })
         )}
       </div>
 
       {/* 底部取消按鈕 */}
-      <div
+      <button
         onClick={() => router.push('/')}
+        tabIndex={0}
+        aria-label={t.backLabel}
         style={{
+          display: 'flex',
+          appearance: 'none',
+          outline: 'none',
+          fontFamily: 'inherit',
           flexShrink: 0,           // 關鍵：防止被壓縮或推擠出畫面
           cursor: 'pointer',
           marginTop: '6px',
@@ -390,7 +425,6 @@ export default function ListPage() {
           border: '1px solid #f87171',
           borderRadius: '4px',
           textAlign: 'left',
-          display: 'flex',
           alignItems: 'center',
         }}
       >
@@ -400,7 +434,7 @@ export default function ListPage() {
         <span style={{ fontSize: '12px', color: '#991b1b', fontWeight: 'bold' }}>
           {t.back}
         </span>
-      </div>
+      </button>
     </main>
   );
 }

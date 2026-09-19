@@ -56,38 +56,29 @@ export default function ListPage() {
   const router = useRouter();
   const [events, setEvents] = useState<(MapInfoItem & { distance?: number })[]>([]);
   const [apiLoading, setApiLoading] = useState(true);
-
-  // 新增 useRef 用來綁定需要滾動的容器
-  const scrollRef = useRef<HTMLElement>(null);
+  
+  // 用於綁定中間的列表容器，以程式化方式控制捲動
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { location, errorMsg, loading: geoLoading } = useGeolocation({ autoFetch: true });
 
-  // 監聽實體按鍵：按 0 返回主畫面
-  //擴充實體按鍵監聽：加入 2(上) 與 5(下)
+  // 監聽實體按鍵：2上 5下 0返回
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === '0') {
         router.push('/');
       } else if (event.key === '2') {
-        // 向上滑動 60px
-        if (scrollRef.current) {
-          scrollRef.current.scrollBy({ top: -60, behavior: 'smooth' });
-        }
+        if (scrollRef.current) scrollRef.current.scrollBy({ top: -55, behavior: 'smooth' });
       } else if (event.key === '5') {
-        // 向下滑動 60px
-        if (scrollRef.current) {
-          scrollRef.current.scrollBy({ top: 60, behavior: 'smooth' });
-        }
+        if (scrollRef.current) scrollRef.current.scrollBy({ top: 55, behavior: 'smooth' });
       }
     };
-    
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [router]);
 
-  // 定義抓取 API 的函數
   async function fetchEvents(userLat?: number, userLng?: number) {
     setApiLoading(true);
     try {
@@ -97,7 +88,6 @@ export default function ListPage() {
         params.set('longtitude', userLng.toString());
       }
 
-      // 🚨 解決延遲更新的關鍵：加上 cache: 'no-store'，強制每次抓取最新資料 🚨
       const res = await fetch(`/api/mapinfo?${params.toString()}`, { 
         cache: 'no-store' 
       });
@@ -125,12 +115,8 @@ export default function ListPage() {
     }
   }
 
-  // 整合 API 呼叫與 Geolocation 的結果
   useEffect(() => {
-    // 如果定位還在載入中，先不要打 API
     if (geoLoading) return;
-
-    // 如果成功取得座標，帶座標去查詢；如果發生錯誤 (例如拒絕授權)，就不帶座標查詢
     if (location) {
       fetchEvents(location.lat, location.lng);
     } else if (errorMsg) {
@@ -139,39 +125,56 @@ export default function ListPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location, geoLoading, errorMsg]);
 
-  // 畫面是否處於載入狀態 (定位中 或 API請求中)
   const isPageLoading = geoLoading || (apiLoading && events.length === 0);
 
   return (
     <main
-      ref={scrollRef}
       style={{
-        width: '240px',           // 嚴格限制寬度符合手機螢幕
-        height: '320px',          // 嚴格限制高度
-        overflowY: 'auto',        // 內容超過高度時顯示垂直捲軸
-        overflowX: 'hidden',      // 隱藏水平捲軸避免破版
-        boxSizing: 'border-box',  // 讓 padding 包含在 240x320 的尺寸內
+        width: '100%',
+        maxWidth: '240px',          // 最大寬度保護
+        height: '100vh',            // 滿版高度
+        maxHeight: '320px',         // 限制在功能機的最大高度內
+        margin: '0 auto',
+        overflow: 'hidden',         // 隱藏整頁的捲動，避免雙層捲軸
+        boxSizing: 'border-box',
         padding: '6px',
-        margin: '0 auto',         // 在一般電腦螢幕開發時可以置中顯示
-        textAlign: 'center',
+        display: 'flex',
+        flexDirection: 'column',    // 使用 flex 讓中間容器自動延展
+        alignItems: 'center',
         backgroundColor: '#ffffff',
         fontFamily: 'sans-serif',
       }}
     >
-      <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px', color: '#000000' }}>
+      {/* 頂部狀態與提示區 */}
+      <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '2px', color: '#000000' }}>
         周遭路況列表
       </h2>
-      <div style={{ fontSize: '10px', color: '#6b7280', marginBottom: '12px' }}>
+      <div style={{ fontSize: '10px', color: '#6b7280', marginBottom: '6px' }}>
         [2]上滑 [5]下滑 | [0]返回
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+      {/* 模擬手機大小的顯示容器 (列表區) */}
+      <div
+        ref={scrollRef}
+        style={{
+          width: '210px',           // 與圖二相同的 210px 寬度
+          flex: 1,                  // 自動填滿標題與底部按鈕之間的剩餘空間
+          overflowY: 'hidden',      // 隱藏預設捲軸，靠 2/5 按鍵程式化滑動
+          border: '1px solid #d1d5db',
+          borderRadius: '4px',
+          backgroundColor: '#f9fafb',
+          padding: '4px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px',
+        }}
+      >
         {isPageLoading ? (
-          <div style={{ fontSize: '12px', color: '#6b7280', padding: '16px' }}>
-            {geoLoading ? '正在取得定位...' : '正在載入路況...'}
+          <div style={{ fontSize: '12px', color: '#6b7280', padding: '16px', textAlign: 'center' }}>
+            {geoLoading ? '定位中...' : '載入路況中...'}
           </div>
         ) : events.length === 0 ? (
-          <div style={{ fontSize: '12px', color: '#6b7280', padding: '16px' }}>
+          <div style={{ fontSize: '12px', color: '#6b7280', padding: '16px', textAlign: 'center' }}>
             周遭暫無突發路況
           </div>
         ) : (
@@ -186,14 +189,14 @@ export default function ListPage() {
               <div
                 key={item.id}
                 style={{
-                  width: '100%', // 改為 100% 自適應容器寬度 (扣除 padding)
-                  maxWidth: '220px', 
+                  width: '100%',
                   boxSizing: 'border-box',
                   padding: '6px 8px',
-                  backgroundColor: '#f3f4f6',
-                  border: '1px solid #d1d5db',
+                  backgroundColor: '#ffffff', 
+                  border: '1px solid #e5e7eb', // 內層卡片加一點邊框
                   borderRadius: '4px',
                   textAlign: 'left',
+                  flexShrink: 0, // 確保卡片不會因為 flex 空間不夠而被擠壓變形
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
@@ -220,14 +223,11 @@ export default function ListPage() {
         onClick={() => router.push('/')}
         style={{
           cursor: 'pointer',
-          marginTop: '12px',
-          marginBottom: '12px', // 底部留白，避免被切掉
-          width: '100%',
-          maxWidth: '220px',
+          marginTop: '6px',
+          marginBottom: '2px',
+          width: '210px',           // 與上方容器寬度切齊
           boxSizing: 'border-box',
-          marginLeft: 'auto',
-          marginRight: 'auto',
-          padding: '6px 8px',
+          padding: '4px 8px',
           backgroundColor: '#fee2e2',
           border: '1px solid #f87171',
           borderRadius: '4px',
@@ -239,7 +239,7 @@ export default function ListPage() {
         <span style={{ fontSize: '12px', fontWeight: 'bold', backgroundColor: '#dc2626', color: '#ffffff', padding: '2px 6px', borderRadius: '3px', marginRight: '10px' }}>
           [ 0 ]
         </span>
-        <span style={{ fontSize: '13px', color: '#991b1b', fontWeight: 'bold' }}>
+        <span style={{ fontSize: '12px', color: '#991b1b', fontWeight: 'bold' }}>
           返回地圖
         </span>
       </div>

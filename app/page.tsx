@@ -5,89 +5,101 @@ import { useRouter } from 'next/navigation';
 import { useGeolocation } from '@/component/useGeolocation';
 import ProximityAlert from '@/component/ProximityAlert';
 
-<<<<<<< HEAD
 // ==========================================
 // 🌐 多國語言字典 (i18n Translations)
 // 包含 itel NEO R60+ 支援的語言，英文為安全後備
 // ==========================================
 const translations = {
-  'zh': { 
-    title: '即時路況定位 (道路貼合)',
+  'zh': {
+    title: '即時路況定位 (避障導航)',
     evtJam: '嚴重塞車', evtCrash: '發生車禍', evtWork: '道路施工', evtDisaster: '自然災害', evtDanger: '不明危險',
-    legendJam: '塞車', legendCrash: '車禍', legendWork: '施工', legendDisaster: '災害', legendDanger: '危險',
-    zoomIn: '放大', zoomOut: '縮小', level: '級別',
-    move: '移動', findPin: '找圖釘', locate: '定位',
-    list: '列表', report: '回報',
-    center: '中心', exact: '精確', fetching: '抓取中'
+    navInit: '移動視野按 [*] 設定目的地', navArrived: '已位於目標點周遭', navCalc: '計算避障路徑中...', 
+    navNoRoute: '無可行導航路線', navActive: '導航中', navSafe: '避開危險', navFailed: '避障路徑規劃失敗',
+    myLocation: '您的目前位置<br/>(可拖曳校正)', destLocation: '目標地點',
+    legendNav: '導航', legendCrash: '車禍', legendJam: '塞車', legendWork: '施工', legendDisaster: '災害',
+    move: '移動', zoom: '縮放', backStart: '回起點', setDest: '設中心為終點導航 (按*覆蓋)',
+    locate: '定位', list: '列表', report: '回報',
+    center: '中心', start: '起點', locating: '定位中', mins: '分'
   },
-  'en': { 
-    title: 'Real-time Traffic (Snapped)',
+  'en': {
+    title: 'Real-time Traffic (Safe Nav)',
     evtJam: 'Traffic Jam', evtCrash: 'Car Crash', evtWork: 'Roadwork', evtDisaster: 'Disaster', evtDanger: 'Unknown Danger',
-    legendJam: 'Jam', legendCrash: 'Crash', legendWork: 'Work', legendDisaster: 'Disaster', legendDanger: 'Danger',
-    zoomIn: 'Zoom In', zoomOut: 'Zoom Out', level: 'Level',
-    move: 'Move', findPin: 'Find Pin', locate: 'Locate',
-    list: 'List', report: 'Report',
-    center: 'Center', exact: 'Exact', fetching: 'Fetching'
+    navInit: 'Move map & press [*] to set destination', navArrived: 'Arrived at destination', navCalc: 'Calculating safe route...', 
+    navNoRoute: 'No valid route found', navActive: 'Navigating', navSafe: 'avoided danger', navFailed: 'Routing failed',
+    myLocation: 'Your Location<br/>(Drag to adjust)', destLocation: 'Destination',
+    legendNav: 'Nav', legendCrash: 'Crash', legendJam: 'Jam', legendWork: 'Work', legendDisaster: 'Disaster',
+    move: 'Move', zoom: 'Zoom', backStart: 'Start', setDest: 'Set Dest via Center (* to overwrite)',
+    locate: 'Locate', list: 'List', report: 'Report',
+    center: 'Center', start: 'Start', locating: 'Locating', mins: 'min'
   },
   'ar': { // 阿拉伯文 (Arabic)
-    title: 'حركة المرور (ملازمة المسار)',
+    title: 'حركة المرور (ملاحة آمنة)',
     evtJam: 'ازدحام شديد', evtCrash: 'حادث سير', evtWork: 'أعمال طرق', evtDisaster: 'كارثة طبيعية', evtDanger: 'خطر مجهول',
-    legendJam: 'ازدحام', legendCrash: 'حادث', legendWork: 'أعمال', legendDisaster: 'كارثة', legendDanger: 'خطر',
-    zoomIn: 'تكبير', zoomOut: 'تصغير', level: 'مستوى',
-    move: 'تحريك', findPin: 'دبوس', locate: 'موقع',
-    list: 'قائمة', report: 'إبلاغ',
-    center: 'مركز', exact: 'دقيق', fetching: 'جاري'
+    navInit: 'حرك الخريطة واضغط [*] للوجهة', navArrived: 'وصلت للوجهة', navCalc: 'جاري حساب مسار آمن...', 
+    navNoRoute: 'لا يوجد مسار', navActive: 'توجيه', navSafe: 'تجنب الخطر', navFailed: 'فشل التوجيه',
+    myLocation: 'موقعك<br/>(اسحب للتعديل)', destLocation: 'الوجهة',
+    legendNav: 'ملاحة', legendCrash: 'حادث', legendJam: 'ازدحام', legendWork: 'أعمال', legendDisaster: 'كارثة',
+    move: 'تحريك', zoom: 'تكبير/تصغير', backStart: 'بداية', setDest: 'تعيين الوجهة بالمركز (* للتجاوز)',
+    locate: 'موقع', list: 'قائمة', report: 'إبلاغ',
+    center: 'مركز', start: 'بداية', locating: 'جاري التحديد', mins: 'دقيقة'
   },
   'fr': { // 法文 (French)
-    title: 'Trafic en direct (Aligné)',
+    title: 'Trafic en direct (Nav sécurisée)',
     evtJam: 'Gros bouchon', evtCrash: 'Accident', evtWork: 'Travaux', evtDisaster: 'Catastrophe', evtDanger: 'Danger inconnu',
-    legendJam: 'Bouchon', legendCrash: 'Accident', legendWork: 'Travaux', legendDisaster: 'Désastre', legendDanger: 'Danger',
-    zoomIn: 'Zoom +', zoomOut: 'Zoom -', level: 'Niveau',
-    move: 'Déplacer', findPin: 'Repère', locate: 'Localiser',
-    list: 'Liste', report: 'Signaler',
-    center: 'Centre', exact: 'Précis', fetching: 'Chargement'
+    navInit: 'Déplacer et appuyer [*] pour dest', navArrived: 'Arrivé à destination', navCalc: 'Calcul itinéraire sûr...', 
+    navNoRoute: 'Aucun itinéraire', navActive: 'Navigation', navSafe: 'danger évité', navFailed: 'Échec calcul',
+    myLocation: 'Votre position<br/>(Glisser pour ajuster)', destLocation: 'Destination',
+    legendNav: 'Nav', legendCrash: 'Accident', legendJam: 'Bouchon', legendWork: 'Travaux', legendDisaster: 'Désastre',
+    move: 'Déplacer', zoom: 'Zoom', backStart: 'Départ', setDest: 'Dest au centre (* pour écraser)',
+    locate: 'Loc', list: 'Liste', report: 'Signaler',
+    center: 'Centre', start: 'Départ', locating: 'Loc...', mins: 'min'
   },
   'pt': { // 葡萄牙文 (Portuguese)
-    title: 'Trânsito Real (Alinhado)',
+    title: 'Trânsito Real (Nav Segura)',
     evtJam: 'Congestionamento', evtCrash: 'Acidente', evtWork: 'Obras', evtDisaster: 'Desastre', evtDanger: 'Perigo',
-    legendJam: 'Congestão', legendCrash: 'Acidente', legendWork: 'Obras', legendDisaster: 'Desastre', legendDanger: 'Perigo',
-    zoomIn: 'Ampliar', zoomOut: 'Reduzir', level: 'Nível',
-    move: 'Mover', findPin: 'Marcador', locate: 'Localizar',
-    list: 'Lista', report: 'Relatar',
-    center: 'Centro', exact: 'Exato', fetching: 'Buscando'
+    navInit: 'Mova e aperte [*] para destino', navArrived: 'Chegou ao destino', navCalc: 'Calculando rota segura...', 
+    navNoRoute: 'Sem rota', navActive: 'Navegando', navSafe: 'perigo evitado', navFailed: 'Falha na rota',
+    myLocation: 'Sua localização<br/>(Arraste para ajustar)', destLocation: 'Destino',
+    legendNav: 'Nav', legendCrash: 'Acidente', legendJam: 'Congestão', legendWork: 'Obras', legendDisaster: 'Desastre',
+    move: 'Mover', zoom: 'Zoom', backStart: 'Início', setDest: 'Destino no centro (* p/ sobrescrever)',
+    locate: 'Loc', list: 'Lista', report: 'Relatar',
+    center: 'Centro', start: 'Início', locating: 'Localizando', mins: 'min'
   },
   'vi': { // 越南文 (Vietnamese)
-    title: 'Giao thông TT (Khớp đường)',
+    title: 'Giao thông TT (Tránh vật cản)',
     evtJam: 'Tắc đường nghiêm trọng', evtCrash: 'Tai nạn', evtWork: 'Công trường', evtDisaster: 'Thiên tai', evtDanger: 'Nguy hiểm',
-    legendJam: 'Tắc đường', legendCrash: 'Tai nạn', legendWork: 'Thi công', legendDisaster: 'Thiên tai', legendDanger: 'Nguy hiểm',
-    zoomIn: 'Phóng to', zoomOut: 'Thu nhỏ', level: 'Mức',
-    move: 'Di chuyển', findPin: 'Tìm ghim', locate: 'Định vị',
-    list: 'Danh sách', report: 'Báo cáo',
-    center: 'Trung tâm', exact: 'Chính xác', fetching: 'Đang tải'
+    navInit: 'Di chuyển & nhấn [*] chọn đích', navArrived: 'Đã đến đích', navCalc: 'Đang tính đường an toàn...', 
+    navNoRoute: 'Không có đường', navActive: 'Đang chỉ đường', navSafe: 'tránh nguy hiểm', navFailed: 'Lỗi tính đường',
+    myLocation: 'Vị trí của bạn<br/>(Kéo để sửa)', destLocation: 'Đích đến',
+    legendNav: 'Dẫn đường', legendCrash: 'Tai nạn', legendJam: 'Tắc đường', legendWork: 'Thi công', legendDisaster: 'Thiên tai',
+    move: 'Di chuyển', zoom: 'Thu phóng', backStart: 'Bắt đầu', setDest: 'Đặt đích ở giữa (* để ghi đè)',
+    locate: 'Định vị', list: 'Danh sách', report: 'Báo cáo',
+    center: 'Trung tâm', start: 'Bắt đầu', locating: 'Đang tìm', mins: 'phút'
   },
   'ha': { // 豪薩語 (Hausa)
-    title: 'Trafik a Lokaci (Tsayayye)',
+    title: 'Trafik a Lokaci (Tukwici mai kyau)',
     evtJam: 'Cunkoson ababen hawa', evtCrash: 'Hatsarin mota', evtWork: 'Aikin hanya', evtDisaster: 'Bala\'i', evtDanger: 'Hadari',
-    legendJam: 'Cunkoso', legendCrash: 'Hatsari', legendWork: 'Aiki', legendDisaster: 'Bala\'i', legendDanger: 'Hadari',
-    zoomIn: 'Kara girma', zoomOut: 'Rage girma', level: 'Mataki',
-    move: 'Matsa', findPin: 'Nemo fil', locate: 'Wuri',
-    list: 'Jeri', report: 'Rahoto',
-    center: 'Cibiya', exact: 'Daidai', fetching: 'Ana'
+    navInit: 'Matsa ka danna [*] don inda zaka', navArrived: 'An isa', navCalc: 'Ana lissafin hanya...', 
+    navNoRoute: 'Babu hanya', navActive: 'Yin tukwici', navSafe: 'an kiyaye', navFailed: 'An gaza',
+    myLocation: 'Wurinka<br/>(Ja don gyara)', destLocation: 'Inda zaka',
+    legendNav: 'Tukwici', legendCrash: 'Hatsari', legendJam: 'Cunkoso', legendWork: 'Aiki', legendDisaster: 'Bala\'i',
+    move: 'Matsa', zoom: 'Zuƙowa', backStart: 'Fara', setDest: 'Saka Cibiya don Inda zaka',
+    locate: 'Wuri', list: 'Jeri', report: 'Rahoto',
+    center: 'Cibiya', start: 'Fara', locating: 'Neman wuri', mins: 'min'
   },
   'sw': { // 斯瓦希里語 (Swahili)
-    title: 'Trafiki ya Moja kwa Moja',
+    title: 'Trafiki ya Moja kwa Moja (Njia Salama)',
     evtJam: 'Msongamano mkubwa', evtCrash: 'Ajali', evtWork: 'Ujenzi wa barabara', evtDisaster: 'Janga', evtDanger: 'Hatari',
-    legendJam: 'Msongamano', legendCrash: 'Ajali', legendWork: 'Ujenzi', legendDisaster: 'Janga', legendDanger: 'Hatari',
-    zoomIn: 'Vuta karibu', zoomOut: 'Sogeza mbali', level: 'Kiwango',
-    move: 'Sogeza', findPin: 'Tafuta pini', locate: 'Eneo',
-    list: 'Orodha', report: 'Ripoti',
-    center: 'Kituo', exact: 'Sahihi', fetching: 'Inapakua'
+    navInit: 'Sogeza na ubonyeze [*] kuweka kituo', navArrived: 'Umefika', navCalc: 'Inakokotoa njia salama...', 
+    navNoRoute: 'Hakuna njia', navActive: 'Inaongoza', navSafe: 'hatari imezuiwa', navFailed: 'Imeshindwa',
+    myLocation: 'Eneo lako<br/>(Buruta kurekebisha)', destLocation: 'Kituo',
+    legendNav: 'Njia', legendCrash: 'Ajali', legendJam: 'Msongamano', legendWork: 'Ujenzi', legendDisaster: 'Janga',
+    move: 'Sogeza', zoom: 'Kuza', backStart: 'Anza', setDest: 'Weka kituo katikati (* kufunika)',
+    locate: 'Eneo', list: 'Orodha', report: 'Ripoti',
+    center: 'Kituo', start: 'Anza', locating: 'Inatafuta', mins: 'dk'
   }
 };
 
-// 定義支援的 5 種事件代碼
-=======
->>>>>>> 8353495bacd6d729d934663ed03392075e8c015f
 export type EventType = 
   | 'traffic_jam'        // 嚴重塞車 (深紅粗線)
   | 'car_crash'          // 發生車禍 (黑色粗線)
@@ -159,8 +171,8 @@ export default function HomePage() {
 
   const [cloudReports, setCloudReports] = useState<ApiMapInfoItem[]>([]);
   
-  // 目的地狀態
-  const [navStatus, setNavStatus] = useState<string>('移動視野按 [*] 設定目的地');
+  // 目的地狀態 (初始化為空字串，將由 render 階段動態套用字典)
+  const [navStatus, setNavStatus] = useState<string>('');
   const navDestinationRef = useRef<{ lat: number; lng: number } | null>(null);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -173,7 +185,6 @@ export default function HomePage() {
 
   const hasInitializedCenterRef = useRef<boolean>(false);
 
-<<<<<<< HEAD
   // 🌐 初始化抓取使用者系統語言
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -188,9 +199,19 @@ export default function HomePage() {
     }
   }, []);
 
-  // 取得當前語言的翻譯包
   const t = translations[langCode as keyof typeof translations] || translations['zh'];
-=======
+
+  // 動態獲取本地化的事件標題
+  const getLocalizedEventTitle = (type: EventType) => {
+    switch (type) {
+      case 'traffic_jam': return t.evtJam;
+      case 'car_crash': return t.evtCrash;
+      case 'roadwork': return t.evtWork;
+      case 'natural_disaster': return t.evtDisaster;
+      default: return t.evtDanger;
+    }
+  };
+
   // 兩點距離計算（公尺）
   const getDistanceMeters = (lat1: number, lng1: number, lat2: number, lng2: number) => {
     const R = 6371000;
@@ -232,12 +253,12 @@ export default function HomePage() {
     currentEvents: TrafficEvent[]
   ) => {
     if (getDistanceMeters(start.lat, start.lng, destination.lat, destination.lng) < 10) {
-      setNavStatus('已位於目標點周遭');
+      setNavStatus(t.navArrived);
       if (navLayerGroupRef.current) navLayerGroupRef.current.clearLayers();
       return;
     }
 
-    setNavStatus('計算避障路徑中...');
+    setNavStatus(t.navCalc);
     try {
       const url = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson&alternatives=3`;
       const res = await fetch(url);
@@ -245,7 +266,7 @@ export default function HomePage() {
 
       const data = await res.json();
       if (!data.routes || data.routes.length === 0) {
-        setNavStatus('無可行導航路線');
+        setNavStatus(t.navNoRoute);
         return;
       }
 
@@ -284,12 +305,11 @@ export default function HomePage() {
 
       const distanceKm = (bestRoute.distance / 1000).toFixed(1);
       const minutes = Math.ceil(bestRoute.duration / 60);
-      setNavStatus(`導航中: ${distanceKm}km (${minutes}分，避開危險)`);
+      setNavStatus(`${t.navActive}: ${distanceKm}km (${minutes}${t.mins}，${t.navSafe})`);
     } catch {
-      setNavStatus('避障路徑規劃失敗');
+      setNavStatus(t.navFailed);
     }
   };
->>>>>>> 8353495bacd6d729d934663ed03392075e8c015f
 
   // 2. 初始定位載入
   useEffect(() => {
@@ -348,22 +368,7 @@ export default function HomePage() {
     }
   };
 
-<<<<<<< HEAD
-  // 動態獲取本地化的事件標題，供地圖圖層繪製時使用
-  const getLocalizedEventTitle = (type: EventType) => {
-    switch (type) {
-      case 'traffic_jam': return t.evtJam;
-      case 'car_crash': return t.evtCrash;
-      case 'roadwork': return t.evtWork;
-      case 'natural_disaster': return t.evtDisaster;
-      default: return t.evtDanger;
-    }
-  };
-
-  // 繪製地圖圖層
-=======
   // 繪製事件圖層
->>>>>>> 8353495bacd6d729d934663ed03392075e8c015f
   const drawLayers = (eventList: TrafficEvent[]) => {
     const map = mapInstanceRef.current;
     const L = leafletRef.current;
@@ -376,46 +381,7 @@ export default function HomePage() {
 
     // 1. 半透明警戒圓 (災害/危險)
     eventList.forEach((item) => {
-<<<<<<< HEAD
       const displayTitle = getLocalizedEventTitle(item.eventType);
-
-      if (item.eventType === 'car_crash') {
-        if (item.paths && item.paths.length > 0) {
-          item.paths.forEach((roadCoords) => {
-            const polyline = L.polyline(roadCoords, {
-              color: '#000000', 
-              weight: 5.5,
-              opacity: 0.9,
-              lineCap: 'round',
-              lineJoin: 'round',
-            });
-            polyline.bindPopup(`<b>💥 ${displayTitle}</b><br/>${item.description || ''}`);
-            polyline.addTo(eventLayerGroupRef.current);
-          });
-        }
-        const centerDot = L.circleMarker([item.lat, item.lng], {
-          radius: 4.5, fillColor: '#000000', color: '#ffffff', weight: 1.5, opacity: 1, fillOpacity: 1,
-        });
-        centerDot.bindPopup(`<b>💥 ${displayTitle}</b><br/>${item.description || ''}`);
-        centerDot.addTo(eventLayerGroupRef.current);
-      }
-      
-      else if (item.eventType === 'traffic_jam') {
-        if (item.paths && item.paths.length > 0) {
-          item.paths.forEach((roadCoords) => {
-            const polyline = L.polyline(roadCoords, {
-              color: '#b91c1c', weight: 5, opacity: 0.85, lineCap: 'round', lineJoin: 'round',
-            });
-            polyline.bindPopup(`<b>🚗 ${displayTitle}</b><br/>${item.description || ''}`);
-            polyline.addTo(eventLayerGroupRef.current);
-          });
-        }
-        const centerDot = L.circleMarker([item.lat, item.lng], {
-          radius: 4.5, fillColor: '#991b1b', color: '#ffffff', weight: 1.5, opacity: 1, fillOpacity: 1,
-        });
-        centerDot.bindPopup(`<b>🚗 ${displayTitle}</b><br/>${item.description || ''}`);
-        centerDot.addTo(eventLayerGroupRef.current);
-=======
       if (item.eventType === 'natural_disaster' || item.eventType === 'unknown_danger') {
         const color = item.eventType === 'natural_disaster' ? '#7c3aed' : '#ca8a04';
         L.circle([item.lat, item.lng], {
@@ -424,30 +390,13 @@ export default function HomePage() {
           fillOpacity: 0.5,
           radius: item.radius || 30,
           weight: 2.5,
-        }).bindPopup(`<b>${item.title}</b><br/>${item.description || ''}`).addTo(eventLayerGroupRef.current);
->>>>>>> 8353495bacd6d729d934663ed03392075e8c015f
+        }).bindPopup(`<b>${displayTitle}</b><br/>${item.description || ''}`).addTo(eventLayerGroupRef.current);
       }
     });
 
-<<<<<<< HEAD
-      else if (item.eventType === 'roadwork') {
-        if (item.paths && item.paths.length > 0) {
-          item.paths.forEach((roadCoords) => {
-            const polyline = L.polyline(roadCoords, {
-              color: '#ea580c', weight: 5, opacity: 0.85, lineCap: 'round', lineJoin: 'round',
-            });
-            polyline.bindPopup(`<b>🚧 ${displayTitle}</b><br/>${item.description || ''}`);
-            polyline.addTo(eventLayerGroupRef.current);
-          });
-        }
-        const centerDot = L.circleMarker([item.lat, item.lng], {
-          radius: 4.5, fillColor: '#ea580c', color: '#ffffff', weight: 1.5, opacity: 1, fillOpacity: 1,
-        });
-        centerDot.bindPopup(`<b>🚧 ${displayTitle}</b><br/>${item.description || ''}`);
-        centerDot.addTo(eventLayerGroupRef.current);
-=======
     // 2. 塞車與施工折線
     eventList.forEach((item) => {
+      const displayTitle = getLocalizedEventTitle(item.eventType);
       if ((item.eventType === 'traffic_jam' || item.eventType === 'roadwork') && item.paths) {
         const color = item.eventType === 'traffic_jam' ? '#b91c1c' : '#ea580c';
         item.paths.forEach((roadCoords) => {
@@ -457,14 +406,14 @@ export default function HomePage() {
             opacity: 0.85,
             lineCap: 'round',
             lineJoin: 'round',
-          }).bindPopup(`<b>${item.title}</b><br/>${item.description || ''}`).addTo(eventLayerGroupRef.current);
+          }).bindPopup(`<b>${displayTitle}</b><br/>${item.description || ''}`).addTo(eventLayerGroupRef.current);
         });
->>>>>>> 8353495bacd6d729d934663ed03392075e8c015f
       }
     });
 
     // 3. 車禍折線 (黑色，置於最上方)
     eventList.forEach((item) => {
+      const displayTitle = getLocalizedEventTitle(item.eventType);
       if (item.eventType === 'car_crash' && item.paths) {
         item.paths.forEach((roadCoords) => {
           L.polyline(roadCoords, {
@@ -473,35 +422,14 @@ export default function HomePage() {
             opacity: 0.95,
             lineCap: 'round',
             lineJoin: 'round',
-          }).bindPopup(`<b>💥 ${item.title}</b><br/>${item.description || ''}`).addTo(eventLayerGroupRef.current);
+          }).bindPopup(`<b>💥 ${displayTitle}</b><br/>${item.description || ''}`).addTo(eventLayerGroupRef.current);
         });
-<<<<<<< HEAD
-        circle.bindPopup(`<b>⚠️ ${displayTitle}</b><br/>${item.description || ''}`);
-        circle.addTo(eventLayerGroupRef.current);
-        const disasterDot = L.circleMarker([item.lat, item.lng], {
-          radius: 4.5, fillColor: '#7c3aed', color: '#ffffff', weight: 1.5, opacity: 1, fillOpacity: 1,
-        });
-        disasterDot.addTo(eventLayerGroupRef.current);
-=======
->>>>>>> 8353495bacd6d729d934663ed03392075e8c015f
       }
     });
 
-<<<<<<< HEAD
-      else {
-        const circle = L.circle([item.lat, item.lng], {
-          color: '#ca8a04', fillColor: '#eab308', fillOpacity: 0.5, radius: item.radius || 30, weight: 2.5,
-        });
-        circle.bindPopup(`<b>⚠️ ${displayTitle}</b><br/>${item.description || ''}`);
-        circle.addTo(eventLayerGroupRef.current);
-        const dangerDot = L.circleMarker([item.lat, item.lng], {
-          radius: 4, fillColor: '#ca8a04', color: '#ffffff', weight: 1.5, opacity: 1, fillOpacity: 1,
-        });
-        dangerDot.addTo(eventLayerGroupRef.current);
-      }
-=======
     // 4. 事件中心標記點
     eventList.forEach((item) => {
+      const displayTitle = getLocalizedEventTitle(item.eventType);
       const isCrash = item.eventType === 'car_crash';
       const dotColors: Record<EventType, string> = {
         traffic_jam: '#991b1b',
@@ -517,38 +445,31 @@ export default function HomePage() {
         color: '#ffffff',
         weight: 1.5,
         fillOpacity: 1,
-      }).bindPopup(`<b>${item.title}</b><br/>${item.description || ''}`).addTo(eventLayerGroupRef.current);
->>>>>>> 8353495bacd6d729d934663ed03392075e8c015f
+      }).bindPopup(`<b>${displayTitle}</b><br/>${item.description || ''}`).addTo(eventLayerGroupRef.current);
     });
   };
 
-  // 當語系切換時，強制更新地圖圖層的彈跳視窗文字
+  // 語系切換時重新渲染圖層標題與標記
   useEffect(() => {
-    if (events.length > 0) {
-      drawLayers(events);
+    if (eventsRef.current.length > 0) {
+      drawLayers(eventsRef.current);
     }
+    if (markerRef.current) markerRef.current.bindPopup(t.myLocation);
+    if (destMarkerRef.current) destMarkerRef.current.bindPopup(`🏁 ${t.destLocation}`);
   }, [langCode]);
 
   const parseEventType = (
     title: string, 
     eventsField: string
   ): { type: EventType; radius: number } => {
-    const t = title.trim();
-    const e = eventsField.trim().toLowerCase();
+    const t_str = title.trim();
+    const e_str = eventsField.trim().toLowerCase();
 
-<<<<<<< HEAD
-    if (t.includes('塞車') || e === 'traffic_jam' || e === 'traffic') return { type: 'traffic_jam', radius: 45 };
-    if (t.includes('車禍') || e === 'car_crash' || e === 'accident') return { type: 'car_crash', radius: 8 };
-    if (t.includes('施工') || e === 'roadwork') return { type: 'roadwork', radius: 28 };
-    if (t.includes('災害') || e === 'natural_disaster') return { type: 'natural_disaster', radius: 35 };
+    if (t_str.includes('塞車') || e_str === 'traffic_jam' || e_str === 'traffic') return { type: 'traffic_jam', radius: 45 };
+    if (t_str.includes('車禍') || e_str === 'car_crash' || e_str === 'accident') return { type: 'car_crash', radius: 16 };
+    if (t_str.includes('施工') || e_str === 'roadwork') return { type: 'roadwork', radius: 28 };
+    if (t_str.includes('災害') || e_str === 'natural_disaster') return { type: 'natural_disaster', radius: 35 };
     return { type: 'unknown_danger', radius: 30 };
-=======
-    if (t.includes('塞車') || e === 'traffic_jam' || e === 'traffic') return { type: 'traffic_jam', displayTitle: '嚴重塞車', radius: 45 };
-    if (t.includes('車禍') || e === 'car_crash' || e === 'accident') return { type: 'car_crash', displayTitle: '發生車禍', radius: 16 };
-    if (t.includes('施工') || e === 'roadwork') return { type: 'roadwork', displayTitle: '道路施工', radius: 28 };
-    if (t.includes('災害') || e === 'natural_disaster') return { type: 'natural_disaster', displayTitle: '自然災害', radius: 35 };
-    return { type: 'unknown_danger', displayTitle: t || '不明危險', radius: 30 };
->>>>>>> 8353495bacd6d729d934663ed03392075e8c015f
   };
 
   // 3. 從 /api/mapinfo 抓取資料並轉換
@@ -666,7 +587,7 @@ export default function HomePage() {
         const marker = L.marker([userLocationRef.current.lat, userLocationRef.current.lng], {
           draggable: true 
         }).addTo(map);
-        marker.bindPopup('您的目前位置<br/>(可拖曳校正)');
+        marker.bindPopup(t.myLocation);
         markerRef.current = marker;
 
         marker.on('dragend', function (e: any) {
@@ -704,7 +625,7 @@ export default function HomePage() {
         mapInstanceRef.current = null;
       }
     };
-  }, [updateLocation]);
+  }, [updateLocation, t.myLocation, t.destLocation]);
 
   // 6. 按鍵控制支援
   useEffect(() => {
@@ -788,7 +709,7 @@ export default function HomePage() {
               weight: 2,
               fillOpacity: 1,
             }).addTo(map);
-            destMarker.bindPopup('🏁 目標地點');
+            destMarker.bindPopup(`🏁 ${t.destLocation}`);
             destMarkerRef.current = destMarker;
           }
         }
@@ -806,11 +727,11 @@ export default function HomePage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [router, updateLocation]);
+  }, [router, updateLocation, t.destLocation]);
 
   return (
     <main
-      dir={langCode === 'ar' ? 'rtl' : 'ltr'} // 支援阿拉伯文的右到左排版
+      dir={langCode === 'ar' ? 'rtl' : 'ltr'} // 🌟 自動支援阿拉伯文的右到左排版
       style={{
         width: '100%',
         maxWidth: '240px',
@@ -833,11 +754,7 @@ export default function HomePage() {
           suppressHydrationWarning
           style={{ fontSize: '13px', fontWeight: 'bold', margin: '2px 0', color: '#000000' }}
         >
-<<<<<<< HEAD
           {t.title}
-=======
-          即時路況定位 (避障導航)
->>>>>>> 8353495bacd6d729d934663ed03392075e8c015f
         </h2>
       </div>
 
@@ -875,57 +792,33 @@ export default function HomePage() {
         overflow: 'hidden',
         textOverflow: 'ellipsis'
       }}>
-        {navStatus}
+        {navStatus || t.navInit}
       </div>
 
       {/* 底部操作與資訊區 */}
       <div style={{ flexShrink: 0, width: '220px', textAlign: 'center', marginTop: '2px' }}>
         <div style={{ fontSize: '9px', color: '#374151', lineHeight: '1.2' }}>
-<<<<<<< HEAD
-          <span style={{ color: '#b91c1c' }}>■ {t.legendJam}</span> | 
+          <span style={{ color: '#2563eb' }}>▬ {t.legendNav}</span> | 
           <span style={{ color: '#000000' }}>■ {t.legendCrash}</span> | 
+          <span style={{ color: '#b91c1c' }}>■ {t.legendJam}</span> | 
           <span style={{ color: '#ea580c' }}>■ {t.legendWork}</span> | 
-          <span style={{ color: '#7c3aed' }}>● {t.legendDisaster}</span> | 
-          <span style={{ color: '#ca8a04' }}>● {t.legendDanger}</span>
-=======
-          <span style={{ color: '#2563eb' }}>▬ 導航</span> | 
-          <span style={{ color: '#000000' }}>■ 車禍</span> | 
-          <span style={{ color: '#b91c1c' }}>■ 塞車</span> | 
-          <span style={{ color: '#ea580c' }}>■ 施工</span> | 
-          <span style={{ color: '#7c3aed' }}>● 災害</span>
->>>>>>> 8353495bacd6d729d934663ed03392075e8c015f
+          <span style={{ color: '#7c3aed' }}>● {t.legendDisaster}</span>
         </div>
 
         {/* 按鍵操作指引 */}
         <div style={{ fontSize: '10px', color: '#374151', marginTop: '2px', lineHeight: '1.3' }}>
-<<<<<<< HEAD
-          <p><strong>[1/↑]</strong> {t.zoomIn} | <strong>[3/↓]</strong> {t.zoomOut} ({t.level}: {currentZoom})</p>
-          <p><strong>[2/4/5/6]</strong> {t.move} | <strong>[0]</strong> {t.findPin} | <strong>[7]</strong> {t.locate}</p>
-          <p style={{ color: '#dc2626', marginTop: '2px' }}>
-            <strong>[8]</strong> {t.list} | <strong>[9]</strong> {t.report}
-          </p>
-        </div>
-
-        {/* 座標資訊 (稍微縮小字體以節省空間) */}
-        <div style={{ fontSize: '9px', marginTop: '2px', color: '#4b5563', lineHeight: '1.2' }}>
-          <p style={{ color: '#000' }}>{t.center}：{viewCenter.lat.toFixed(4)}, {viewCenter.lng.toFixed(4)}</p>
-          <p>
-            {t.exact}：{userLocationRef.current.lat.toFixed(4)}, {userLocationRef.current.lng.toFixed(4)}
-            {geoLoading && <span style={{ color: '#2563eb' }}> ({t.fetching})</span>}
-=======
-          <p><strong>[2/4/5/6]</strong> 移動 | <strong>[1/3]</strong> 縮放 | <strong>[0]</strong> 回起點</p>
-          <p style={{ color: '#16a34a' }}><strong>[*]</strong> 設中心為終點導航 (按*覆蓋)</p>
+          <p><strong>[2/4/5/6]</strong> {t.move} | <strong>[1/3]</strong> {t.zoom} | <strong>[0]</strong> {t.backStart}</p>
+          <p style={{ color: '#16a34a' }}><strong>[*]</strong> {t.setDest}</p>
           <p style={{ color: '#dc2626', marginTop: '1px' }}>
-            <strong>[7]</strong> 定位 | <strong>[8]</strong> 列表 | <strong>[9]</strong> 回報
+            <strong>[7]</strong> {t.locate} | <strong>[8]</strong> {t.list} | <strong>[9]</strong> {t.report}
           </p>
         </div>
 
         <div style={{ fontSize: '9px', marginTop: '1px', color: '#4b5563', lineHeight: '1.2' }}>
-          <p>中心：{viewCenter.lat.toFixed(4)}, {viewCenter.lng.toFixed(4)}</p>
+          <p>{t.center}：{viewCenter.lat.toFixed(4)}, {viewCenter.lng.toFixed(4)}</p>
           <p>
-            起點：{userLocationRef.current.lat.toFixed(4)}, {userLocationRef.current.lng.toFixed(4)}
-            {geoLoading && <span style={{ color: '#2563eb' }}> (定位中)</span>}
->>>>>>> 8353495bacd6d729d934663ed03392075e8c015f
+            {t.start}：{userLocationRef.current.lat.toFixed(4)}, {userLocationRef.current.lng.toFixed(4)}
+            {geoLoading && <span style={{ color: '#2563eb' }}> ({t.locating})</span>}
             {geoError && <span style={{ color: '#dc2626' }}> ({geoError})</span>}
           </p>
         </div>

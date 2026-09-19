@@ -84,7 +84,7 @@ export default function ListPage() {
       }
 
       // 🚨 解決延遲更新的關鍵：加上 cache: 'no-store'，強制每次抓取最新資料 🚨
-      const res = await fetch(`/api?${params.toString()}`, { 
+      const res = await fetch(`/api/mapinfo?${params.toString()}`, { 
         cache: 'no-store' 
       });
       

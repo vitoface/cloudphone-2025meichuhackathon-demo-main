@@ -14,6 +14,7 @@ export async function POST(request: Request) {
     const latitude = Number(body.latitude);
     const longitude = Number(body.longitude);
     const radius = Number(body.radius);
+    const language = body.language || 'zh'; // 接收語言代碼，預設為中文
 
     if (
       !Number.isFinite(latitude) ||
@@ -90,7 +91,7 @@ export async function POST(request: Request) {
 
         disasters: [],
 
-        summary: "目前搜尋範圍內沒有查詢到已知的災害事件。",
+        summary: "",
       });
     }
 
@@ -103,6 +104,7 @@ export async function POST(request: Request) {
     1. 絕對不要打招呼、不要寫前言、不要使用條列式 (# 或 *)。
     2. 總字數嚴格限制在 40 字以內。
     3. 直接輸出一小段話即可。
+    4. 必須使用語言代碼 "${language}" 所對應的語言來輸出你的回答。
 
     目前的災害統計：
     ${JSON.stringify(disasters.map(d => ({ title: d.title, type: d.events })))}

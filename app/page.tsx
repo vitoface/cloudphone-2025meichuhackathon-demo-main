@@ -580,11 +580,10 @@ export default function HomePage() {
     }, 4000);
 
     const handleOnline = () => {
-      setIsOnline(true);
       syncOfflineReports();
     };
     const handleOffline = () => {
-      setIsOnline(false);
+      
     };
 
     window.addEventListener('online', handleOnline);

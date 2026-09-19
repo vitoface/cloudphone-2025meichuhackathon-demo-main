@@ -139,6 +139,10 @@ export default function HomePage() {
   const router = useRouter();
   const [langCode, setLangCode] = useState<string>('zh');
 
+  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [pendingSyncCount, setPendingSyncCount] = useState<number>(0);
+  const isSyncingRef = useRef<boolean>(false);
+
   const { 
     location: geoCoords, 
     loading: geoLoading, 
@@ -184,6 +188,7 @@ export default function HomePage() {
       } else {
         setLangCode('en');
       }
+      setIsOnline(navigator.onLine);
     }
   }, []);
 
@@ -424,6 +429,13 @@ export default function HomePage() {
     });
   };
 
+  // 🌟【關鍵修復 1】：當 events 資料就緒且地圖與 Leaflet 已載入時，立即自動重繪
+  useEffect(() => {
+    if (events.length > 0 && mapInstanceRef.current && leafletRef.current) {
+      drawLayers(events);
+    }
+  }, [events]);
+
   useEffect(() => {
     if (eventsRef.current.length > 0) {
       drawLayers(eventsRef.current);
@@ -452,6 +464,7 @@ export default function HomePage() {
       if (!res.ok) return;
 
       const apiData: ApiMapInfoItem[] = await res.json();
+      setIsOnline(true);
       setCloudReports(apiData);
 
       const mappedEvents: TrafficEvent[] = apiData.map((item, idx) => {
@@ -492,16 +505,99 @@ export default function HomePage() {
         planSafeNavigation(userLocationRef.current, navDestinationRef.current, resolvedEvents);
       }
     } catch {
-      // 靜默處理
+      setIsOnline(false);
     }
+  };
+
+  const syncOfflineReports = async () => {
+    if (typeof window === 'undefined' || isSyncingRef.current) return;
+
+    const raw = localStorage.getItem('offline_reports');
+    if (!raw) {
+      setPendingSyncCount(0);
+      return;
+    }
+
+    let queue: any[] = [];
+    try {
+      queue = JSON.parse(raw);
+    } catch {
+      return;
+    }
+
+    if (!Array.isArray(queue) || queue.length === 0) {
+      setPendingSyncCount(0);
+      return;
+    }
+
+    setPendingSyncCount(queue.length);
+
+    isSyncingRef.current = true;
+    const remaining: any[] = [];
+
+    for (let i = 0; i < queue.length; i++) {
+      const item = queue[i];
+      try {
+        const payload = {
+          longtitude: item.longtitude,
+          latitude: item.latitude,
+          title: item.title,
+          description: item.description || '離線自動補送回報',
+          events: item.events,
+        };
+
+        const res = await fetch('/api/newMapinfo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          remaining.push(item);
+        }
+      } catch {
+        setIsOnline(false);
+        remaining.push(...queue.slice(i));
+        break;
+      }
+    }
+
+    if (remaining.length === 0) {
+      localStorage.removeItem('offline_reports');
+      setPendingSyncCount(0);
+      setIsOnline(true);
+      fetchAndProcessEvents(eventsRef.current);
+    } else {
+      localStorage.setItem('offline_reports', JSON.stringify(remaining));
+      setPendingSyncCount(remaining.length);
+    }
+
+    isSyncingRef.current = false;
   };
 
   useEffect(() => {
     fetchAndProcessEvents([]);
+    syncOfflineReports();
+
     const interval = setInterval(() => {
       fetchAndProcessEvents(eventsRef.current);
-    }, 15000);
-    return () => clearInterval(interval);
+      syncOfflineReports();
+    }, 4000);
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      syncOfflineReports();
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   useEffect(() => {
@@ -510,7 +606,7 @@ export default function HomePage() {
     router.prefetch('/list');
   }, [router]);
 
-  // 🌟 初始化 Leaflet（全面針對 Cloud Phone 雲端架構加固）
+  // 初始化 Leaflet
   useEffect(() => {
     const mapContainer = mapContainerRef.current;
     if (!mapContainer) return;
@@ -549,7 +645,6 @@ export default function HomePage() {
           scrollWheelZoom: true,
         });
 
-        // 🌟 核心關鍵：改用 CartoDB 輕量圖磚（不擋 CloudMosa 雲端機房 IP，加載快且對比度最高）
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
           maxZoom: 19,
           subdomains: 'abcd',
@@ -573,7 +668,11 @@ export default function HomePage() {
           }
         });
 
+        // 繪製已有事件
         drawLayers(eventsRef.current);
+
+        // 🌟【關鍵修復 2】：地圖實例掛載完成後，立即主動向 API 觸發一次更新，消弭時序脫節
+        fetchAndProcessEvents(eventsRef.current);
 
         let moveTimeout: any;
         map.on('moveend', () => {
@@ -596,7 +695,6 @@ export default function HomePage() {
           }, 300);
         });
 
-        // 🌟 強制在 100ms 與 500ms 重繪一次尺寸，防止 Cloud Phone 虛擬 DOM 渲染空白
         setTimeout(() => map.invalidateSize(), 100);
         setTimeout(() => map.invalidateSize(), 500);
       }
@@ -737,9 +835,25 @@ export default function HomePage() {
         >
           {t.title}
         </h2>
+
+        {(!isOnline || pendingSyncCount > 0) && (
+          <div
+            style={{
+              fontSize: '9px',
+              backgroundColor: isOnline ? '#fef3c7' : '#fee2e2',
+              color: isOnline ? '#92400e' : '#991b1b',
+              padding: '1px 4px',
+              borderRadius: '3px',
+              fontWeight: 'bold',
+              marginBottom: '2px',
+              border: `1px solid ${isOnline ? '#fcd34d' : '#fca5a5'}`
+            }}
+          >
+            {!isOnline ? `⚠️ 離線狀態 (待同步: ${pendingSyncCount})` : `🔄 連線恢復：自動同步中 (${pendingSyncCount})`}
+          </div>
+        )}
       </div>
 
-      {/* 🌟 地圖容器外層與高度防護：給予固定 145px 高度，杜絕 Cloud Phone 高度計算塌陷為 0 */}
       <div style={{ position: 'relative', width: '220px', height: '145px', flexShrink: 0 }}>
         <div
           ref={mapContainerRef}
@@ -750,7 +864,7 @@ export default function HomePage() {
             border: '1px solid #d1d5db',
             position: 'relative',
             overflow: 'hidden',
-            backgroundColor: '#e5e7eb', // 增加載入時的底色保護
+            backgroundColor: '#e5e7eb',
             zIndex: 1,
           }}
         />

@@ -14,6 +14,7 @@ const translations = {
     defaultStatus: '請使用上下鍵選擇，按 Enter 回報',
     cooldownStatus: (sec: number) => `⏳ 冷卻中... 請等待 ${sec} 秒`,
     sendingStatus: '定位並傳送中，請稍候...',
+    offlineStatus: '📦 離線狀態：回報已暫存，恢復連線時同步！',
     noCoordsError: '無法取得座標',
     reportDesc: '透過實體按鍵手機回報',
     successStatus: (title: string) => `回報成功！已記錄：${title}`,
@@ -29,6 +30,7 @@ const translations = {
     defaultStatus: 'Use Up/Down to select, Enter to report',
     cooldownStatus: (sec: number) => `⏳ Cooldown... wait ${sec}s`,
     sendingStatus: 'Locating and sending...',
+    offlineStatus: '📦 Offline: Report saved locally, will sync later!',
     noCoordsError: 'Unable to get coordinates',
     reportDesc: 'Reported via physical keypad phone',
     successStatus: (title: string) => `Success! Recorded: ${title}`,
@@ -38,12 +40,13 @@ const translations = {
     gpsLocating: 'Locating GPS...',
     move: 'Move', send: 'Send', cancelBack: 'Cancel & Back'
   },
-  'ar': { // 阿拉伯文 (Arabic)
+  'ar': {
     pageTitle: 'قائمة الإبلاغ',
     titleCrash: 'حادث سير', titleJam: 'ازدحام شديد', titleWork: 'أعمال طرق', titleDanger: 'خطر مجهول', titleDisaster: 'كارثة طبيعية',
     defaultStatus: 'استخدم أعلى/أسفل للتحديد، و Enter للإبلاغ',
     cooldownStatus: (sec: number) => `⏳ تبريد... انتظر ${sec} ثانية`,
     sendingStatus: 'جاري التحديد والإرسال...',
+    offlineStatus: '📦 وضع عدم الاتصال: تم الحفظ، ستتم المزامنة لاحقاً!',
     noCoordsError: 'تعذر الحصول على الإحداثيات',
     reportDesc: 'تم الإبلاغ عبر هاتف بلوحة مفاتيح',
     successStatus: (title: string) => `نجاح! تم تسجيل: ${title}`,
@@ -53,12 +56,13 @@ const translations = {
     gpsLocating: 'جاري تحديد GPS...',
     move: 'تحريك', send: 'إرسال', cancelBack: 'إلغاء ورجوع'
   },
-  'fr': { // 法文 (French)
+  'fr': {
     pageTitle: 'Menu de signalement',
     titleCrash: 'Accident', titleJam: 'Gros bouchon', titleWork: 'Travaux', titleDanger: 'Danger inconnu', titleDisaster: 'Catastrophe',
     defaultStatus: 'Haut/Bas pour choisir, Entrée pour signaler',
     cooldownStatus: (sec: number) => `⏳ Attente... patientez ${sec}s`,
     sendingStatus: 'Localisation et envoi...',
+    offlineStatus: '📦 Hors ligne : Enregistré localement, sera synchronisé !',
     noCoordsError: 'Coordonnées introuvables',
     reportDesc: 'Signalé via téléphone à clavier',
     successStatus: (title: string) => `Succès ! Enregistré : ${title}`,
@@ -68,12 +72,13 @@ const translations = {
     gpsLocating: 'Localisation GPS...',
     move: 'Déplacer', send: 'Envoyer', cancelBack: 'Annuler & Retour'
   },
-  'pt': { // 葡萄牙文 (Portuguese)
+  'pt': {
     pageTitle: 'Menu de Relatos',
     titleCrash: 'Acidente', titleJam: 'Congestionamento', titleWork: 'Obras', titleDanger: 'Perigo desconhecido', titleDisaster: 'Desastre natural',
     defaultStatus: 'Cima/Baixo para selecionar, Enter para relatar',
     cooldownStatus: (sec: number) => `⏳ Tempo de espera... ${sec}s`,
     sendingStatus: 'Localizando e enviando...',
+    offlineStatus: '📦 Offline: Salvo localmente, será sincronizado!',
     noCoordsError: 'Não foi possível obter coordenadas',
     reportDesc: 'Relatado via telefone de teclado',
     successStatus: (title: string) => `Sucesso! Registrado: ${title}`,
@@ -83,12 +88,13 @@ const translations = {
     gpsLocating: 'Localizando GPS...',
     move: 'Mover', send: 'Enviar', cancelBack: 'Cancelar e Voltar'
   },
-  'vi': { // 越南文 (Vietnamese)
+  'vi': {
     pageTitle: 'Menu Báo cáo',
     titleCrash: 'Tai nạn', titleJam: 'Tắc đường', titleWork: 'Công trường', titleDanger: 'Nguy hiểm', titleDisaster: 'Thiên tai',
     defaultStatus: 'Dùng Lên/Xuống để chọn, Enter để báo cáo',
     cooldownStatus: (sec: number) => `⏳ Đang chờ... đợi ${sec}s`,
     sendingStatus: 'Đang định vị và gửi...',
+    offlineStatus: '📦 Ngoại tuyến: Đã lưu cục bộ, sẽ đồng bộ sau!',
     noCoordsError: 'Không thể lấy tọa độ',
     reportDesc: 'Báo cáo qua điện thoại phím cứng',
     successStatus: (title: string) => `Thành công! Đã lưu: ${title}`,
@@ -98,12 +104,13 @@ const translations = {
     gpsLocating: 'Đang định vị GPS...',
     move: 'Di chuyển', send: 'Gửi', cancelBack: 'Hủy & Quay lại'
   },
-  'ha': { // 豪薩語 (Hausa)
+  'ha': {
     pageTitle: 'Menu na Rahoto',
     titleCrash: 'Hatsarin mota', titleJam: 'Cunkoson ababen hawa', titleWork: 'Aikin hanya', titleDanger: 'Hadari', titleDisaster: 'Bala\'i',
     defaultStatus: 'Yi amfani da Sama/Ƙasa, danna Enter',
     cooldownStatus: (sec: number) => `⏳ Jira kadan... sakan ${sec}`,
     sendingStatus: 'Nemo wuri da aikawa...',
+    offlineStatus: '📦 Ba intanet: An adana a waya, za a aika daga baya!',
     noCoordsError: 'Ba a iya samun wuri ba',
     reportDesc: 'An kawo rahoto ta wayar maballin',
     successStatus: (title: string) => `Yayi! An yi rikodin: ${title}`,
@@ -113,12 +120,13 @@ const translations = {
     gpsLocating: 'Nemo GPS...',
     move: 'Matsa', send: 'Aika', cancelBack: 'Soke & Koma'
   },
-  'sw': { // 斯瓦希里語 (Swahili)
+  'sw': {
     pageTitle: 'Menyu ya Ripoti',
     titleCrash: 'Ajali', titleJam: 'Msongamano', titleWork: 'Ujenzi wa barabara', titleDanger: 'Hatari', titleDisaster: 'Janga',
     defaultStatus: 'Tumia Juu/Chini kuchagua, Enter kuripoti',
     cooldownStatus: (sec: number) => `⏳ Tulia... subiri sekunde ${sec}`,
     sendingStatus: 'Inatafuta na kutuma...',
+    offlineStatus: '📦 Nje ya mtandao: Imehifadhiwa, itasawazishwa baadaye!',
     noCoordsError: 'Imeshindwa kupata kuratibu',
     reportDesc: 'Imeripotiwa kupitia simu ya vitufe',
     successStatus: (title: string) => `Imefanikiwa! Imerekodiwa: ${title}`,
@@ -140,16 +148,13 @@ export default function ReportPage() {
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [isReporting, setIsReporting] = useState(false);
   
-  // 🌐 改用結構化的狀態來管理提示訊息，方便在切換語系時也能即時翻譯
   const [status, setStatus] = useState<{
-    type: 'default' | 'cooldown' | 'sending' | 'success' | 'fail' | 'network_error';
+    type: 'default' | 'cooldown' | 'sending' | 'offline_saved' | 'success' | 'fail' | 'network_error';
     payload?: string | number;
   }>({ type: 'default' });
 
-  // 用來追蹤每一個選項的 DOM 元素，以便自動捲動
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // 🌐 初始化抓取使用者系統語言
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const navLang = navigator.language.split('-')[0].toLowerCase();
@@ -158,14 +163,13 @@ export default function ReportPage() {
       } else if (translations[navLang as keyof typeof translations]) {
         setLangCode(navLang);
       } else {
-        setLangCode('en'); // 找不到支援的語言時，強制使用英文
+        setLangCode('en');
       }
     }
   }, []);
 
   const t = translations[langCode as keyof typeof translations] || translations['zh'];
 
-  // 動態獲取本地化的選項清單
   const getReportOptions = () => [
     { title: t.titleCrash, event: 'car_crash' },
     { title: t.titleJam, event: 'traffic_jam' },
@@ -175,10 +179,10 @@ export default function ReportPage() {
   ];
   const currentOptions = getReportOptions();
 
-  // 根據狀態動態產生顯示的文字
   let displayMessage = t.defaultStatus;
   if (status.type === 'cooldown') displayMessage = t.cooldownStatus(status.payload as number);
   else if (status.type === 'sending') displayMessage = t.sendingStatus;
+  else if (status.type === 'offline_saved') displayMessage = t.offlineStatus;
   else if (status.type === 'success') displayMessage = t.successStatus(status.payload as string);
   else if (status.type === 'fail') {
     const errText = status.payload === 'serverError' ? t.serverError : (status.payload as string);
@@ -186,7 +190,6 @@ export default function ReportPage() {
   }
   else if (status.type === 'network_error') displayMessage = t.networkError;
 
-  // 當選中的索引改變時，自動將該項目捲動到可視範圍內
   useEffect(() => {
     if (itemRefs.current[selectedIndex]) {
       itemRefs.current[selectedIndex]?.scrollIntoView({
@@ -196,11 +199,11 @@ export default function ReportPage() {
     }
   }, [selectedIndex]);
 
-  // 處理實際送出回報的邏輯
+  // 處理送出回報的邏輯
   const handleReport = async (option: { title: string, event: string }) => {
     if (isReporting || loading) return;
 
-    // 🌟 【新增：30 秒回報冷卻機制】防止連點或洗版
+    // 30 秒回報冷卻機制
     const COOLDOWN_SECONDS = 30;
     const lastReportStr = localStorage.getItem('my_last_report_time');
     
@@ -208,16 +211,14 @@ export default function ReportPage() {
       const elapsedMs = Date.now() - parseInt(lastReportStr, 10);
       const elapsedSecs = Math.floor(elapsedMs / 1000);
 
-      // 如果距離上次回報還不到 30 秒，擋下來！
       if (elapsedSecs < COOLDOWN_SECONDS) {
         const remainingSecs = COOLDOWN_SECONDS - elapsedSecs;
         setStatus({ type: 'cooldown', payload: remainingSecs });
         
-        // 3 秒後恢復原本的提示文字
         setTimeout(() => {
           setStatus({ type: 'default' });
         }, 3000);
-        return; // 直接中斷，不送出 API
+        return;
       }
     }
 
@@ -225,32 +226,58 @@ export default function ReportPage() {
     setStatus({ type: 'sending' });
 
     try {
-      const currentCoords = await fetchLocation();
+      let currentCoords: { lat: number; lng: number } | null = null;
+      try {
+        currentCoords = await fetchLocation();
+      } catch {
+        // 定位抓不到時的保底備用
+        const savedLat = sessionStorage.getItem('map_last_lat');
+        const savedLng = sessionStorage.getItem('map_last_lng');
+        if (savedLat && savedLng) {
+          currentCoords = { lat: parseFloat(savedLat), lng: parseFloat(savedLng) };
+        }
+      }
 
       if (!currentCoords || !currentCoords.lat || !currentCoords.lng) {
         throw new Error(errorMsg || t.noCoordsError);
       }
 
+      const reportPayload = {
+        longtitude: currentCoords.lng,
+        latitude: currentCoords.lat,
+        title: option.title,
+        description: t.reportDesc,
+        events: option.event,
+        created_at: new Date().toISOString(),
+      };
+
+      // 🌟【關鍵修改】：斷網狀態下直接存本機 localStorage，不向外連線
+      if (typeof window !== 'undefined' && !navigator.onLine) {
+        const queue = JSON.parse(localStorage.getItem('offline_reports') || '[]');
+        queue.push(reportPayload);
+        localStorage.setItem('offline_reports', JSON.stringify(queue));
+        localStorage.setItem('my_last_report_time', Date.now().toString());
+
+        setStatus({ type: 'offline_saved' });
+        setTimeout(() => {
+          router.push('/');
+        }, 2000);
+        return;
+      }
+
+      // 連線正常時直接發 API
       const response = await fetch('/api/newMapinfo', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          longtitude: currentCoords.lng,
-          latitude: currentCoords.lat,
-          title: option.title,          // 送出已翻譯的標題
-          description: t.reportDesc,    // 送出已翻譯的描述
-          events: option.event,
-        }),
+        body: JSON.stringify(reportPayload),
       });
 
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // 成功送出後，更新時間戳記（同時給冷卻鎖、以及左下角警示燈過濾用）
         localStorage.setItem('my_last_report_time', Date.now().toString());
-        
         setStatus({ type: 'success', payload: option.title });
         setTimeout(() => {
           router.push('/');
@@ -265,6 +292,26 @@ export default function ReportPage() {
       }
     } catch (error) {
       console.error('處理回報時發生錯誤:', error);
+      
+      // 網路突然中斷時自動轉存本地暫存
+      if (typeof window !== 'undefined') {
+        const queue = JSON.parse(localStorage.getItem('offline_reports') || '[]');
+        queue.push({
+          longtitude: 120.9917,
+          latitude: 24.7936,
+          title: option.title,
+          description: t.reportDesc,
+          events: option.event,
+          created_at: new Date().toISOString(),
+        });
+        localStorage.setItem('offline_reports', JSON.stringify(queue));
+        setStatus({ type: 'offline_saved' });
+        setTimeout(() => {
+          router.push('/');
+        }, 2000);
+        return;
+      }
+
       setStatus({ type: 'network_error' });
       setIsReporting(false);
       setTimeout(() => {
@@ -314,31 +361,31 @@ export default function ReportPage() {
 
   return (
     <main
-      dir={langCode === 'ar' ? 'rtl' : 'ltr'} // 🌟 自動支援阿拉伯文的右到左排版
+      dir={langCode === 'ar' ? 'rtl' : 'ltr'}
       style={{
         width: '100%',
-        maxWidth: '240px',          // 最大寬度保護
-        height: '100vh',            // 滿版高度
-        maxHeight: '320px',         // 限制在功能機的最大高度內
+        maxWidth: '240px',
+        height: '100vh',
+        maxHeight: '320px',
         margin: '0 auto',
-        overflow: 'hidden',         // 隱藏整頁的捲動，避免雙層捲軸
+        overflow: 'hidden',
         boxSizing: 'border-box',
         padding: '6px',
         display: 'flex',
-        flexDirection: 'column',    // 使用 flex 讓中間容器自動延展
+        flexDirection: 'column',
         alignItems: 'center',
         backgroundColor: '#ffffff',
         fontFamily: 'sans-serif',
       }}
     >
-      {/* 頂部狀態與提示區 (設定 flexShrink: 0 避免被壓縮) */}
+      {/* 頂部狀態與提示區 */}
       <div style={{ flexShrink: 0, textAlign: 'center', width: '100%' }}>
         <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '2px', color: '#000000' }}>
           {t.pageTitle}
         </h2>
         <div style={{ 
           fontSize: '11px', 
-          color: (isReporting || loading || status.type === 'cooldown') ? '#2563eb' : '#dc2626', 
+          color: (isReporting || loading || status.type === 'cooldown' || status.type === 'offline_saved') ? '#2563eb' : '#dc2626', 
           marginBottom: '6px', 
           fontWeight: 'bold' 
         }}>
@@ -346,14 +393,14 @@ export default function ReportPage() {
         </div>
       </div>
 
-      {/* 模擬手機大小的顯示容器 (選單區) */}
+      {/* 選單區 */}
       <div
         style={{
           width: '210px',
-          flex: 1,                  // 自動填滿標題與底部按鈕之間的剩餘空間
-          overflowY: 'scroll',      // 允許捲動以配合 scrollIntoView
-          scrollbarWidth: 'none',   // 隱藏 Firefox 捲軸
-          msOverflowStyle: 'none',  // 隱藏 IE/Edge 捲軸
+          flex: 1,
+          overflowY: 'scroll',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
           border: '1px solid #d1d5db',
           borderRadius: '4px',
           backgroundColor: '#f9fafb',
@@ -386,7 +433,7 @@ export default function ReportPage() {
                 cursor: 'pointer',
                 fontSize: '12px',
                 fontWeight: 'bold',
-                flexShrink: 0, // 確保選項卡片不會被擠壓變形
+                flexShrink: 0,
                 boxSizing: 'border-box',
               }}
             >
@@ -403,14 +450,12 @@ export default function ReportPage() {
         })}
       </div>
 
-      {/* 底部按鍵指引與取消按鈕 (設定 flexShrink: 0 確保貼齊底部) */}
+      {/* 底部按鍵指引與取消按鈕 */}
       <div style={{ flexShrink: 0, width: '210px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        {/* 按鍵操作指引 */}
         <div style={{ fontSize: '10px', color: '#4b5563', marginTop: '6px', marginBottom: '4px', lineHeight: '1.3', textAlign: 'center' }}>
           <span><strong>[↑/2] [↓/5]</strong> {t.move} | <strong>[Enter]</strong> {t.send}</span>
         </div>
 
-        {/* 底部取消按鈕 */}
         <div
           onClick={handleCancel}
           style={{

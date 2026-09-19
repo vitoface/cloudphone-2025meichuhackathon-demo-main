@@ -32,7 +32,7 @@ const translations = {
     locate: 'Locate', list: 'List', report: 'Report',
     center: 'Center', start: 'Start', locating: 'Locating', mins: 'min'
   },
-  'ar': { // 阿拉伯文 (Arabic)
+  'ar': {
     title: 'حركة المرور (ملاحة آمنة)',
     evtJam: 'ازدحام شديد', evtCrash: 'حادث سير', evtWork: 'أعمال طرق', evtDisaster: 'كارثة طبيعية', evtDanger: 'خطر مجهول',
     navInit: 'حرك الخريطة واضغط [*] للوجهة', navArrived: 'وصلت للوجهة', navCalc: 'جاري حساب مسار آمن...', 
@@ -43,7 +43,7 @@ const translations = {
     locate: 'موقع', list: 'قائمة', report: 'إبلاغ',
     center: 'مركز', start: 'بداية', locating: 'جاري التحديد', mins: 'دقيقة'
   },
-  'fr': { // 法文 (French)
+  'fr': {
     title: 'Trafic en direct (Nav sécurisée)',
     evtJam: 'Gros bouchon', evtCrash: 'Accident', evtWork: 'Travaux', evtDisaster: 'Catastrophe', evtDanger: 'Danger inconnu',
     navInit: 'Déplacer et appuyer [*] pour dest', navArrived: 'Arrivé à destination', navCalc: 'Calcul itinéraire sûr...', 
@@ -54,7 +54,7 @@ const translations = {
     locate: 'Loc', list: 'Liste', report: 'Signaler',
     center: 'Centre', start: 'Départ', locating: 'Loc...', mins: 'min'
   },
-  'pt': { // 葡萄牙文 (Portuguese)
+  'pt': {
     title: 'Trânsito Real (Nav Segura)',
     evtJam: 'Congestionamento', evtCrash: 'Acidente', evtWork: 'Obras', evtDisaster: 'Desastre', evtDanger: 'Perigo',
     navInit: 'Mova e aperte [*] para destino', navArrived: 'Chegou ao destino', navCalc: 'Calculando rota segura...', 
@@ -65,7 +65,7 @@ const translations = {
     locate: 'Loc', list: 'Lista', report: 'Relatar',
     center: 'Centro', start: 'Início', locating: 'Localizando', mins: 'min'
   },
-  'vi': { // 越南文 (Vietnamese)
+  'vi': {
     title: 'Giao thông TT (Tránh vật cản)',
     evtJam: 'Tắc đường nghiêm trọng', evtCrash: 'Tai nạn', evtWork: 'Công trường', evtDisaster: 'Thiên tai', evtDanger: 'Nguy hiểm',
     navInit: 'Di chuyển & nhấn [*] chọn đích', navArrived: 'Đã đến đích', navCalc: 'Đang tính đường an toàn...', 
@@ -76,7 +76,7 @@ const translations = {
     locate: 'Định vị', list: 'Danh sách', report: 'Báo cáo',
     center: 'Trung tâm', start: 'Bắt đầu', locating: 'Đang tìm', mins: 'phút'
   },
-  'ha': { // 豪薩語 (Hausa)
+  'ha': {
     title: 'Trafik a Lokaci (Tukwici mai kyau)',
     evtJam: 'Cunkoson ababen hawa', evtCrash: 'Hatsarin mota', evtWork: 'Aikin hanya', evtDisaster: 'Bala\'i', evtDanger: 'Hadari',
     navInit: 'Matsa ka danna [*] don inda zaka', navArrived: 'An isa', navCalc: 'Ana lissafin hanya...', 
@@ -87,7 +87,7 @@ const translations = {
     locate: 'Wuri', list: 'Jeri', report: 'Rahoto',
     center: 'Cibiya', start: 'Fara', locating: 'Neman wuri', mins: 'min'
   },
-  'sw': { // 斯瓦希里語 (Swahili)
+  'sw': {
     title: 'Trafiki ya Moja kwa Moja (Njia Salama)',
     evtJam: 'Msongamano mkubwa', evtCrash: 'Ajali', evtWork: 'Ujenzi wa barabara', evtDisaster: 'Janga', evtDanger: 'Hatari',
     navInit: 'Sogeza na ubonyeze [*] kuweka kituo', navArrived: 'Umefika', navCalc: 'Inakokotoa njia salama...', 
@@ -136,11 +136,28 @@ const EVENT_PENALTY: Record<EventType, number> = {
   unknown_danger: 150,
 };
 
+// 🌟 回報項目定義
+const REPORT_OPTIONS = [
+  { title: '發生車禍', event: 'car_crash' as EventType },
+  { title: '嚴重塞車', event: 'traffic_jam' as EventType },
+  { title: '道路施工', event: 'roadwork' as EventType },
+  { title: '不明危險', event: 'unknown_danger' as EventType },
+  { title: '自然災害', event: 'natural_disaster' as EventType },
+];
+
 export default function HomePage() {
   const router = useRouter();
 
   // 🌐 語言狀態管理
   const [langCode, setLangCode] = useState<string>('zh');
+
+  // 🌟 單頁內嵌回報彈窗狀態（第二種解法核心）
+  const [showReportModal, setShowReportModal] = useState<boolean>(false);
+  const [reportIndex, setReportIndex] = useState<number>(0);
+  const [reportStatus, setReportStatus] = useState<string>('請使用 2/5 鍵選擇，按 Enter 回報');
+  const [isSubmittingReport, setIsSubmittingReport] = useState<boolean>(false);
+  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [pendingSyncCount, setPendingSyncCount] = useState<number>(0);
 
   // 1. 定位 Hook
   const { 
@@ -166,12 +183,12 @@ export default function HomePage() {
 
   // 存放事件
   const [events, setEvents] = useState<TrafficEvent[]>([]);
-  const eventsRef = useRef<TrafficEvent[]>([]); // 🌟 解決閉包陷阱：Ref 永遠保留最新事件清單
+  const eventsRef = useRef<TrafficEvent[]>([]);
   eventsRef.current = events;
 
   const [cloudReports, setCloudReports] = useState<ApiMapInfoItem[]>([]);
   
-  // 目的地狀態 (初始化為空字串，將由 render 階段動態套用字典)
+  // 目的地狀態
   const [navStatus, setNavStatus] = useState<string>('');
   const navDestinationRef = useRef<{ lat: number; lng: number } | null>(null);
 
@@ -185,7 +202,7 @@ export default function HomePage() {
 
   const hasInitializedCenterRef = useRef<boolean>(false);
 
-  // 🌐 初始化抓取使用者系統語言
+  // 初始化語系與在線狀態
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const navLang = navigator.language.split('-')[0].toLowerCase();
@@ -194,14 +211,14 @@ export default function HomePage() {
       } else if (translations[navLang as keyof typeof translations]) {
         setLangCode(navLang);
       } else {
-        setLangCode('en'); // 找不到支援的語言時，強制使用英文
+        setLangCode('en');
       }
+      setIsOnline(navigator.onLine);
     }
   }, []);
 
   const t = translations[langCode as keyof typeof translations] || translations['zh'];
 
-  // 動態獲取本地化的事件標題
   const getLocalizedEventTitle = (type: EventType) => {
     switch (type) {
       case 'traffic_jam': return t.evtJam;
@@ -212,7 +229,6 @@ export default function HomePage() {
     }
   };
 
-  // 兩點距離計算（公尺）
   const getDistanceMeters = (lat1: number, lng1: number, lat2: number, lng2: number) => {
     const R = 6371000;
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -224,7 +240,6 @@ export default function HomePage() {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
-  // 繪製導航避障折線
   const drawNavRoute = (path: [number, number][]) => {
     const map = mapInstanceRef.current;
     const L = leafletRef.current;
@@ -233,11 +248,10 @@ export default function HomePage() {
     if (!navLayerGroupRef.current) {
       navLayerGroupRef.current = L.layerGroup().addTo(map);
     }
-    // 🌟 徹底清除舊導航線，避免疊線造成繪製卡死
     navLayerGroupRef.current.clearLayers();
 
     const navPolyline = L.polyline(path, {
-      color: '#2563eb', // 亮藍色導航主線
+      color: '#2563eb',
       weight: 6,
       opacity: 0.9,
       lineCap: 'round',
@@ -246,7 +260,6 @@ export default function HomePage() {
     navPolyline.addTo(navLayerGroupRef.current);
   };
 
-  // 避開事件的導航規劃演算法
   const planSafeNavigation = async (
     start: { lat: number; lng: number },
     destination: { lat: number; lng: number },
@@ -311,7 +324,6 @@ export default function HomePage() {
     }
   };
 
-  // 2. 初始定位載入
   useEffect(() => {
     if (geoCoords && !hasInitializedCenterRef.current) {
       userLocationRef.current = geoCoords;
@@ -331,7 +343,6 @@ export default function HomePage() {
     }
   }, [geoCoords]);
 
-  // 五向射線道路探索
   const fetchMultiRayRoads = async (lat: number, lng: number, radiusMeters: number): Promise<[number, number][][]> => {
     const r = radiusMeters || 30;
     const latDelta = r / 111000;
@@ -368,7 +379,6 @@ export default function HomePage() {
     }
   };
 
-  // 繪製事件圖層
   const drawLayers = (eventList: TrafficEvent[]) => {
     const map = mapInstanceRef.current;
     const L = leafletRef.current;
@@ -379,7 +389,7 @@ export default function HomePage() {
     }
     eventLayerGroupRef.current.clearLayers();
 
-    // 1. 半透明警戒圓 (災害/危險)
+    // 1. 半透明警戒圓
     eventList.forEach((item) => {
       const displayTitle = getLocalizedEventTitle(item.eventType);
       if (item.eventType === 'natural_disaster' || item.eventType === 'unknown_danger') {
@@ -411,7 +421,7 @@ export default function HomePage() {
       }
     });
 
-    // 3. 車禍折線 (黑色，置於最上方)
+    // 3. 車禍折線
     eventList.forEach((item) => {
       const displayTitle = getLocalizedEventTitle(item.eventType);
       if (item.eventType === 'car_crash' && item.paths) {
@@ -427,7 +437,7 @@ export default function HomePage() {
       }
     });
 
-    // 4. 事件中心標記點
+    // 4. 中心標記點
     eventList.forEach((item) => {
       const displayTitle = getLocalizedEventTitle(item.eventType);
       const isCrash = item.eventType === 'car_crash';
@@ -449,7 +459,6 @@ export default function HomePage() {
     });
   };
 
-  // 語系切換時重新渲染圖層標題與標記
   useEffect(() => {
     if (eventsRef.current.length > 0) {
       drawLayers(eventsRef.current);
@@ -472,7 +481,6 @@ export default function HomePage() {
     return { type: 'unknown_danger', radius: 30 };
   };
 
-  // 3. 從 /api/mapinfo 抓取資料並轉換
   const fetchAndProcessEvents = async (currentEvents: TrafficEvent[]) => {
     try {
       const res = await fetch('/api/mapinfo');
@@ -515,7 +523,6 @@ export default function HomePage() {
       setEvents(resolvedEvents);
       drawLayers(resolvedEvents);
 
-      // 當路況更新時，若目的地已經存在，自動重新規劃避障路徑
       if (navDestinationRef.current) {
         planSafeNavigation(userLocationRef.current, navDestinationRef.current, resolvedEvents);
       }
@@ -528,7 +535,6 @@ export default function HomePage() {
     fetchAndProcessEvents([]);
   }, []);
 
-  // 4. 每 10 秒靜默輪詢
   useEffect(() => {
     const interval = setInterval(() => {
       fetchAndProcessEvents(eventsRef.current);
@@ -537,7 +543,137 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
-  // 5. 初始化 Leaflet
+  // 🌟 背景檢查與自動同步離線佇列
+  const updatePendingCount = () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const queue = JSON.parse(localStorage.getItem('offline_reports') || '[]');
+      setPendingSyncCount(Array.isArray(queue) ? queue.length : 0);
+    } catch {
+      setPendingSyncCount(0);
+    }
+  };
+
+  const handleOnlineAutoSync = async () => {
+    setIsOnline(true);
+    const raw = localStorage.getItem('offline_reports');
+    if (!raw) return;
+
+    let queue: any[] = [];
+    try {
+      queue = JSON.parse(raw);
+    } catch {
+      return;
+    }
+
+    if (queue.length === 0) return;
+
+    console.log(`連線恢復，自動補送 ${queue.length} 筆回報...`);
+    try {
+      for (const item of queue) {
+        await fetch('/api/newMapinfo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(item),
+        });
+      }
+      localStorage.removeItem('offline_reports');
+      setPendingSyncCount(0);
+      alert(`已恢復連線！自動同步了 ${queue.length} 筆離線回報。`);
+      fetchAndProcessEvents(eventsRef.current);
+    } catch (e) {
+      console.error('自動補送失敗，留待下次重試:', e);
+    }
+  };
+
+  useEffect(() => {
+    updatePendingCount();
+    const onOnline = () => handleOnlineAutoSync();
+    const onOffline = () => {
+      setIsOnline(false);
+      updatePendingCount();
+    };
+
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+
+    if (navigator.onLine) {
+      handleOnlineAutoSync();
+    }
+
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
+
+  // 🌟 單頁回報送出邏輯（完全在本地執行，有網打 API，沒網直接存 localStorage）
+  const submitQuickReport = async (option: typeof REPORT_OPTIONS[0]) => {
+    if (isSubmittingReport) return;
+    setIsSubmittingReport(true);
+    setReportStatus('處理中，請稍候...');
+
+    const payload = {
+      longtitude: userLocationRef.current.lng,
+      latitude: userLocationRef.current.lat,
+      title: option.title,
+      description: '透過實體按鍵手機回報',
+      events: option.event,
+      created_at: new Date().toISOString(),
+    };
+
+    // 斷網情況：直接存入本地 localStorage，絕不跳恐龍
+    if (!navigator.onLine) {
+      try {
+        const queue = JSON.parse(localStorage.getItem('offline_reports') || '[]');
+        queue.push(payload);
+        localStorage.setItem('offline_reports', JSON.stringify(queue));
+        updatePendingCount();
+        setReportStatus('📦 離線模式：回報已暫存至本地！');
+      } catch {
+        setReportStatus('暫存失敗');
+      }
+
+      setTimeout(() => {
+        setIsSubmittingReport(false);
+        setShowReportModal(false);
+        setReportStatus('請使用 2/5 鍵選擇，按 Enter 回報');
+      }, 1500);
+      return;
+    }
+
+    // 連線正常：直接打 API
+    try {
+      const res = await fetch('/api/newMapinfo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setReportStatus(`回報成功：${option.title}`);
+        fetchAndProcessEvents(eventsRef.current);
+      } else {
+        setReportStatus(`回報失敗: ${data.error || '伺服器異常'}`);
+      }
+    } catch {
+      // 網路突然中斷時降級回暫存
+      const queue = JSON.parse(localStorage.getItem('offline_reports') || '[]');
+      queue.push(payload);
+      localStorage.setItem('offline_reports', JSON.stringify(queue));
+      updatePendingCount();
+      setReportStatus('⚠️ 連線中斷，已轉存為離線回報');
+    }
+
+    setTimeout(() => {
+      setIsSubmittingReport(false);
+      setShowReportModal(false);
+      setReportStatus('請使用 2/5 鍵選擇，按 Enter 回報');
+    }, 1500);
+  };
+
+  // 初始化 Leaflet
   useEffect(() => {
     const mapContainer = mapContainerRef.current;
     if (!mapContainer) return;
@@ -583,7 +719,6 @@ export default function HomePage() {
 
         mapInstanceRef.current = map;
 
-        // 使用者所在位置大頭針
         const marker = L.marker([userLocationRef.current.lat, userLocationRef.current.lng], {
           draggable: true 
         }).addTo(map);
@@ -627,17 +762,40 @@ export default function HomePage() {
     };
   }, [updateLocation, t.myLocation, t.destLocation]);
 
-  // 6. 按鍵控制支援
+  // 🌟 按鍵控制：根據是否開啟彈窗進行事件分流
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 情況 A：彈窗已開啟時，按鍵專注於選單導航與送出
+      if (showReportModal) {
+        if (isSubmittingReport) return;
+
+        if (e.key === 'ArrowUp' || e.key === '2') {
+          e.preventDefault();
+          setReportIndex((prev) => (prev > 0 ? prev - 1 : REPORT_OPTIONS.length - 1));
+        } else if (e.key === 'ArrowDown' || e.key === '5') {
+          e.preventDefault();
+          setReportIndex((prev) => (prev < REPORT_OPTIONS.length - 1 ? prev + 1 : 0));
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          submitQuickReport(REPORT_OPTIONS[reportIndex]);
+        } else if (e.key === '0') {
+          e.preventDefault();
+          setShowReportModal(false); // 取消並關閉彈窗
+        }
+        return; // 攔截其他地圖按鍵
+      }
+
+      // 情況 B：正常地圖瀏覽狀態
       if (e.key === '8') {
         e.preventDefault();
         router.push('/list');
         return;
       }
+
+      // 🌟 [9] 鍵：原地開啟彈窗，絕不呼叫 router.push('/report')
       if (e.key === '9') {
         e.preventDefault();
-        router.push('/report');
+        setShowReportModal(true);
         return;
       }
 
@@ -669,12 +827,10 @@ export default function HomePage() {
         map.panBy([panDistance, 0], { animate: true });
       }
 
-      // [7] 鍵：校正目前中心為所在地
       if (e.key === '7') {
         e.preventDefault();
         const center = map.getCenter();
         userLocationRef.current = { lat: center.lat, lng: center.lng };
-        
         updateLocation(center.lat, center.lng);
 
         if (markerRef.current) {
@@ -688,16 +844,12 @@ export default function HomePage() {
         }
       }
 
-      // 🌟 [*] 鍵：完美覆蓋目的地，無論按幾次都能無縫重算
       if (e.key === '*' || e.key === 'Enter') {
         e.preventDefault();
         const center = map.getCenter();
         const dest = { lat: center.lat, lng: center.lng };
-        
-        // 更新目的地 Ref
         navDestinationRef.current = dest;
 
-        // 更新綠色終點標記位置
         if (L) {
           if (destMarkerRef.current) {
             destMarkerRef.current.setLatLng([dest.lat, dest.lng]);
@@ -714,11 +866,9 @@ export default function HomePage() {
           }
         }
 
-        // 呼叫避障規劃（使用當下最新狀態，完全避開閉包延遲）
         planSafeNavigation(userLocationRef.current, dest, eventsRef.current);
       }
 
-      // [0] 鍵：回到使用者目前位置
       if (e.key === '0') {
         e.preventDefault();
         map.panTo([userLocationRef.current.lat, userLocationRef.current.lng], { animate: true });
@@ -727,12 +877,13 @@ export default function HomePage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [router, updateLocation, t.destLocation]);
+  }, [showReportModal, reportIndex, isSubmittingReport, router, updateLocation, t.destLocation]);
 
   return (
     <main
-      dir={langCode === 'ar' ? 'rtl' : 'ltr'} // 🌟 自動支援阿拉伯文的右到左排版
+      dir={langCode === 'ar' ? 'rtl' : 'ltr'}
       style={{
+        position: 'relative',
         width: '100%',
         maxWidth: '240px',
         height: '100vh',
@@ -748,7 +899,7 @@ export default function HomePage() {
         fontFamily: 'sans-serif',
       }}
     >
-      {/* 頂部標題區 */}
+      {/* 頂部標題與離線提示列 */}
       <div style={{ flexShrink: 0, textAlign: 'center', width: '100%' }}>
         <h2
           suppressHydrationWarning
@@ -756,6 +907,23 @@ export default function HomePage() {
         >
           {t.title}
         </h2>
+
+        {(!isOnline || pendingSyncCount > 0) && (
+          <div
+            style={{
+              fontSize: '9px',
+              backgroundColor: isOnline ? '#fef3c7' : '#fee2e2',
+              color: isOnline ? '#92400e' : '#991b1b',
+              padding: '1px 4px',
+              borderRadius: '3px',
+              fontWeight: 'bold',
+              marginBottom: '2px',
+              border: `1px solid ${isOnline ? '#fcd34d' : '#fca5a5'}`
+            }}
+          >
+            {!isOnline ? `⚠️ 離線狀態 (待同步: ${pendingSyncCount})` : `🔄 恢復連線：同步中 (${pendingSyncCount})`}
+          </div>
+        )}
       </div>
 
       {/* 地圖容器與預警提示 */}
@@ -805,7 +973,6 @@ export default function HomePage() {
           <span style={{ color: '#7c3aed' }}>● {t.legendDisaster}</span>
         </div>
 
-        {/* 按鍵操作指引 */}
         <div style={{ fontSize: '10px', color: '#374151', marginTop: '2px', lineHeight: '1.3' }}>
           <p><strong>[2/4/5/6]</strong> {t.move} | <strong>[1/3]</strong> {t.zoom} | <strong>[0]</strong> {t.backStart}</p>
           <p style={{ color: '#16a34a' }}><strong>[*]</strong> {t.setDest}</p>
@@ -823,6 +990,109 @@ export default function HomePage() {
           </p>
         </div>
       </div>
+
+      {/* 🌟 核心第二解法 UI：完全在本地記憶體中的單頁回報彈窗 */}
+      {showReportModal && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: '#ffffff',
+            zIndex: 9999, // 蓋在 Leaflet 之上
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '6px',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div style={{ flexShrink: 0, textAlign: 'center', width: '100%' }}>
+            <h2 style={{ fontSize: '13px', fontWeight: 'bold', margin: '2px 0', color: '#000000' }}>
+              狀況回報選單
+            </h2>
+            <div style={{ fontSize: '10px', color: isSubmittingReport ? '#2563eb' : '#dc2626', fontWeight: 'bold', marginBottom: '4px' }}>
+              {reportStatus}
+            </div>
+          </div>
+
+          {/* 選項列表 */}
+          <div
+            style={{
+              width: '210px',
+              flex: 1,
+              overflowY: 'auto',
+              border: '1px solid #d1d5db',
+              borderRadius: '4px',
+              backgroundColor: '#f9fafb',
+              padding: '4px',
+              boxSizing: 'border-box',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+            }}
+          >
+            {REPORT_OPTIONS.map((opt, idx) => {
+              const isSelected = idx === reportIndex;
+              return (
+                <div
+                  key={opt.event}
+                  onClick={() => {
+                    setReportIndex(idx);
+                    submitQuickReport(opt);
+                  }}
+                  style={{
+                    padding: '6px 8px',
+                    backgroundColor: isSelected ? '#000000' : '#ffffff',
+                    color: isSelected ? '#ffffff' : '#000000',
+                    border: isSelected ? '2px solid #2563eb' : '1px solid #e5e7eb',
+                    borderRadius: '4px',
+                    textAlign: 'left',
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  <span style={{ marginRight: '8px', opacity: 0.7 }}>[{idx + 1}]</span>
+                  <span>{opt.title}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 操作說明與取消鍵 */}
+          <div style={{ flexShrink: 0, width: '210px', marginTop: '6px' }}>
+            <div style={{ fontSize: '10px', color: '#4b5563', marginBottom: '4px', textAlign: 'center' }}>
+              <strong>[2/↑] [5/↓]</strong> 選擇 | <strong>[Enter]</strong> 送出
+            </div>
+            <div
+              onClick={() => setShowReportModal(false)}
+              style={{
+                cursor: 'pointer',
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '4px 8px',
+                backgroundColor: '#fee2e2',
+                border: '1px solid #f87171',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <span style={{ fontSize: '10px', fontWeight: 'bold', backgroundColor: '#dc2626', color: '#ffffff', padding: '1px 5px', borderRadius: '3px', marginRight: '8px' }}>
+                [ 0 ]
+              </span>
+              <span style={{ fontSize: '11px', color: '#991b1b', fontWeight: 'bold' }}>
+                取消返回地圖
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

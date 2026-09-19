@@ -227,7 +227,8 @@ export default function AiAnalysisPage() {
               fillColor: 'transparent', 
               weight: 2,
               dashArray: '5, 5',
-              radius: SEARCH_RADIUS
+              radius: SEARCH_RADIUS,
+              language: langCode
             }).addTo(map);
           }
         };
@@ -351,7 +352,7 @@ export default function AiAnalysisPage() {
 
       // 縮短文字，去掉 /10.0 和 係數 兩字
       setDensityInfo(t.densityFormat(riskLevel, riskIndex.toFixed(1), clusterMultiplier.toFixed(1)));
-      setAiSummary(data.summary || t.analysisComplete);
+      setAiSummary(count === 0 ? t.noDisaster : (data.summary || t.analysisComplete));
 
       if (L) {
         L.circle([targetLat, targetLng], {

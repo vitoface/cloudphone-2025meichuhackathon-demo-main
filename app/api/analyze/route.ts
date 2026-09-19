@@ -94,36 +94,19 @@ export async function POST(request: Request) {
       });
     }
 
-    // 4. 把資料交給 Gemini 分析
+    // 4. 把資料交給 Gemini 分析 (極簡版 Prompt)
     const prompt = `
-你是一個災害資訊分析助手。
+    你是一個車載導航的危險預警 AI。
+    請根據以下範圍內的災害資料，直接告訴駕駛「需要注意哪種災害」以及「一句避險建議」。
 
-使用者目前的位置：
-latitude: ${latitude}
-longitude: ${longitude}
+    嚴格規則：
+    1. 絕對不要打招呼、不要寫前言、不要使用條列式 (# 或 *)。
+    2. 總字數嚴格限制在 40 字以內。
+    3. 直接輸出一小段話即可。
 
-搜尋範圍：
-${radius} 公尺
-
-系統已經從資料庫取得以下災害資料：
-
-${JSON.stringify(disasters, null, 2)}
-
-請根據這些資料進行統整。
-
-請：
-1. 說明這大概是什麼地方
-2. 說明附近有哪些災害
-3. 說明災害大致分布在哪些方向
-4. 哪些災害距離使用者最近
-5. 哪些災害可能需要特別注意
-6. 提供簡短的安全建議
-
-不要捏造資料庫沒有提供的災害資訊。
-如果資料不足，請明確說明資料不足。
-
-請使用繁體中文回答。
-`;
+    目前的災害統計：
+    ${JSON.stringify(disasters.map(d => ({ title: d.title, type: d.events })))}
+    `;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash-lite",

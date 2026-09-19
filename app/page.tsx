@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation'; // 引入 useRouter
 
 export default function HomePage() {
+  const router = useRouter(); // 初始化 router
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
@@ -124,9 +126,22 @@ export default function HomePage() {
     };
   }, [location]);
 
-  // 3. 監聽實體按鍵控制地圖（縮放、平移與回中心）
+  // 3. 監聽實體按鍵控制地圖與頁面跳轉
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 確保即使地圖還沒載入完成，按 8 和 9 依然可以跳轉頁面
+      if (e.key === '8') {
+        e.preventDefault();
+        router.push('/list');
+        return;
+      }
+      
+      if (e.key === '9') {
+        e.preventDefault();
+        router.push('/report');
+        return;
+      }
+
       const map = mapInstanceRef.current;
       if (!map) return;
 
@@ -168,7 +183,7 @@ export default function HomePage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [location]);
+  }, [location, router]);
 
   return (
     <main style={{ padding: '6px', textAlign: 'center', backgroundColor: '#ffffff', minHeight: '100vh' }}>
@@ -209,16 +224,17 @@ export default function HomePage() {
               borderRadius: '6px',
               border: '1px solid #d1d5db',
               margin: '0 auto',
-              position: 'relative', // 確保子圖磚以這個框框為基準
-              overflow: 'hidden',   // 避免圖磚超出框線
+              position: 'relative', 
+              overflow: 'hidden',   
               zIndex: 1,
             }}
           />
 
-          {/* 按鍵指引提示 */}
+          {/* 按鍵指引提示，新增了 8 和 9 的功能說明 */}
           <div style={{ fontSize: '10px', color: '#374151', marginTop: '6px', lineHeight: '1.4' }}>
             <p><strong>[1/↑]</strong> 放大 | <strong>[3/↓]</strong> 縮小 (級別: {currentZoom})</p>
             <p><strong>[2/4/5/6]</strong> 上左下右移 | <strong>[0]</strong> 回中心</p>
+            <p style={{ color: '#dc2626' }}><strong>[8]</strong> 列表 | <strong>[9]</strong> 回報</p>
           </div>
 
           <div style={{ fontSize: '11px', marginTop: '4px', color: '#000000', lineHeight: '1.3' }}>

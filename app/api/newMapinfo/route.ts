@@ -114,29 +114,29 @@ export async function POST(request: Request) {
 
     // scheduleGridDensityRefresh();
 
-    const { error: error_his } = await supabase
-      .from("MapInfo_history")
-      .insert({
-        longtitude: lng,
-        latitude: lat,
-        title,
-        description: description ?? null,
-        events: events ?? null,
-      })
-      .select()
-      .single();
+    // const { error: error_his } = await supabase
+    //   .from("MapInfo_history")
+    //   .insert({
+    //     longtitude: lng,
+    //     latitude: lat,
+    //     title,
+    //     description: description ?? null,
+    //     events: events ?? null,
+    //   })
+    //   .select()
+    //   .single();
 
-    if (error_his) {
-      console.error("Supabase insert error:", error_his);
+    // if (error_his) {
+    //   console.error("Supabase insert error:", error_his);
 
-      return NextResponse.json(
-        {
-          success: false,
-          error: error_his.message,
-        },
-        { status: 500 }
-      );
-    }
+    //   return NextResponse.json(
+    //     {
+    //       success: false,
+    //       error: error_his.message,
+    //     },
+    //     { status: 500 }
+    //   );
+    // }
 
     return NextResponse.json(
       {

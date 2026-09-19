@@ -308,8 +308,8 @@ Grid density rules:
   insert.
 - Divide valid coordinates into `0.01 × 0.01` degree grid cells.
 - Store only cells containing at least three events.
-- Store the cell bounds, average marker coordinate, event count, dominant
-  non-null event, and refresh timestamp.
+- Store the grid-center coordinate, a meter radius that covers the grid, and
+  the event count.
 - Ignore MapInfo records with invalid coordinates while calculating density.
 - Replace stale density cells after every successful refresh.
 
@@ -377,17 +377,12 @@ events
 The aggregated density table `GridDensity` contains:
 
 ```text
-grid_key
-min_latitude
-max_latitude
-min_longtitude
-max_longtitude
-center_latitude
-center_longtitude
-event_count
-dominant_event
-updated_at
-refresh_token
+id
+create_at
+latitude
+longtitude
+radius
+even_num
 ```
 
 The `events` column uses the PostgreSQL enum type `map_event` and is nullable

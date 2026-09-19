@@ -4,10 +4,8 @@ import { supabase } from "@/lib/supabase";
 export async function GET() {
   const { data, error } = await supabase
     .from("GridDensity")
-    .select(
-      "grid_key, min_latitude, max_latitude, min_longtitude, max_longtitude, center_latitude, center_longtitude, event_count, dominant_event, updated_at"
-    )
-    .order("event_count", { ascending: false });
+    .select("id, create_at, latitude, longtitude, radius, even_num")
+    .order("even_num", { ascending: false });
 
   if (error) {
     console.error("Grid density query error:", error);

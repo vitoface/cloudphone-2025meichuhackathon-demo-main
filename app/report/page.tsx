@@ -15,7 +15,7 @@ const REPORT_OPTIONS = [
 
 export default function ReportPage() {
   const router = useRouter();
-  const { fetchLocation, loading, errorMsg } = useGeolocation({autoFetch: false });
+  const { fetchLocation, loading, errorMsg } = useGeolocation({ watch: false, autoFetch: false });
 
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [statusMessage, setStatusMessage] = useState('請使用上下鍵選擇，按 Enter 回報');
@@ -29,7 +29,7 @@ export default function ReportPage() {
     if (itemRefs.current[selectedIndex]) {
       itemRefs.current[selectedIndex]?.scrollIntoView({
         behavior: 'smooth',
-        block: 'nearest', // 確保剛好完整顯示在畫面內
+        block: 'nearest', 
       });
     }
   }, [selectedIndex]);
@@ -37,6 +37,28 @@ export default function ReportPage() {
   // 處理實際送出回報的邏輯
   const handleReport = async (option: typeof REPORT_OPTIONS[0]) => {
     if (isReporting || loading) return;
+
+    // 🌟 【新增：30 秒回報冷卻機制】防止連點或洗版
+    const COOLDOWN_SECONDS = 30;
+    const lastReportStr = localStorage.getItem('my_last_report_time');
+    
+    if (lastReportStr) {
+      const elapsedMs = Date.now() - parseInt(lastReportStr, 10);
+      const elapsedSecs = Math.floor(elapsedMs / 1000);
+
+      // 如果距離上次回報還不到 30 秒，擋下來！
+      if (elapsedSecs < COOLDOWN_SECONDS) {
+        const remainingSecs = COOLDOWN_SECONDS - elapsedSecs;
+        setStatusMessage(`⏳ 冷卻中... 請等待 ${remainingSecs} 秒`);
+        
+        // 3 秒後恢復原本的提示文字
+        setTimeout(() => {
+          setStatusMessage('請使用上下鍵選擇，按 Enter 回報');
+        }, 3000);
+        return; // 直接中斷，不送出 API
+      }
+    }
+
     setIsReporting(true);
     setStatusMessage('定位並傳送中，請稍候...');
 
@@ -64,6 +86,9 @@ export default function ReportPage() {
       const result = await response.json();
 
       if (response.ok && result.success) {
+        // 🌟 成功送出後，更新時間戳記（同時給冷卻鎖、以及左下角警示燈過濾用）
+        localStorage.setItem('my_last_report_time', Date.now().toString());
+        
         setStatusMessage(`回報成功！已記錄：${option.title}`);
         setTimeout(() => {
           router.push('/');
@@ -132,7 +157,7 @@ export default function ReportPage() {
       </h2>
 
       {/* 狀態提示區 */}
-      <div style={{ fontSize: '11px', color: isReporting || loading ? '#2563eb' : '#dc2626', marginBottom: '8px', fontWeight: 'bold' }}>
+      <div style={{ fontSize: '11px', color: isReporting || loading || statusMessage.includes('冷卻中') ? '#2563eb' : '#dc2626', marginBottom: '8px', fontWeight: 'bold' }}>
         {loading ? 'GPS 定位中...' : statusMessage}
       </div>
 
@@ -140,9 +165,9 @@ export default function ReportPage() {
       <div
         style={{
           width: '210px',
-          height: '110px', // 限制高度，大約只能同時看到 2.5 個選項，超出就會觸發自動捲動
+          height: '110px',
           margin: '0 auto',
-          overflowY: 'hidden', // 隱藏滑鼠滾動條，純靠鍵盤連動
+          overflowY: 'hidden',
           border: '1px solid #d1d5db',
           borderRadius: '4px',
           backgroundColor: '#f9fafb',
@@ -157,7 +182,7 @@ export default function ReportPage() {
           return (
             <div
               key={opt.event}
-              ref={(el) => { itemRefs.current[index] = el; }} // 綁定每個選項的 ref
+              ref={(el) => { itemRefs.current[index] = el; }}
               onClick={() => {
                 setSelectedIndex(index);
                 handleReport(opt);
@@ -174,7 +199,7 @@ export default function ReportPage() {
                 cursor: 'pointer',
                 fontSize: '12px',
                 fontWeight: 'bold',
-                flexShrink: 0, // 防止項目被壓縮
+                flexShrink: 0, 
               }}
             >
               <span style={{ marginRight: '8px', opacity: 0.7 }}>[{index + 1}]</span>

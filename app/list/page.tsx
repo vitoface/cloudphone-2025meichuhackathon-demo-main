@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 // 🌟 路徑改為 @/component/useGeolocation
@@ -57,16 +57,30 @@ export default function ListPage() {
   const [events, setEvents] = useState<(MapInfoItem & { distance?: number })[]>([]);
   const [apiLoading, setApiLoading] = useState(true);
 
-  // 👇 使用你的自訂 Hook (開啟 autoFetch)
+  // 新增 useRef 用來綁定需要滾動的容器
+  const scrollRef = useRef<HTMLElement>(null);
+
   const { location, errorMsg, loading: geoLoading } = useGeolocation({ autoFetch: true });
 
   // 監聽實體按鍵：按 0 返回主畫面
+  //擴充實體按鍵監聽：加入 2(上) 與 5(下)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === '0') {
         router.push('/');
+      } else if (event.key === '2') {
+        // 向上滑動 60px
+        if (scrollRef.current) {
+          scrollRef.current.scrollBy({ top: -60, behavior: 'smooth' });
+        }
+      } else if (event.key === '5') {
+        // 向下滑動 60px
+        if (scrollRef.current) {
+          scrollRef.current.scrollBy({ top: 60, behavior: 'smooth' });
+        }
       }
     };
+    
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);

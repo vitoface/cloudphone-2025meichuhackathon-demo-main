@@ -1,3 +1,4 @@
+// page.tsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -29,13 +30,18 @@ interface ApiMapInfoItem {
 export default function HomePage() {
   const router = useRouter();
 
-  // 1. 定位 Hook（持續追蹤位置）
-  const { location: geoCoords, loading: geoLoading, errorMsg: geoError } = useGeolocation({
-    watch: true,
+  // 1. 定位 Hook（僅抓取一次 IP 粗略位置或讀取記憶的精確位置）
+  // 新增解構 updateLocation，以便手動更新精確位置並寫入 sessionStorage
+  const { 
+    location: geoCoords, 
+    loading: geoLoading, 
+    errorMsg: geoError,
+    updateLocation 
+  } = useGeolocation({
     autoFetch: true,
   });
 
-  // 使用者真實 GPS 座標（供 [0] 鍵回正使用）
+  // 使用者真實/校正後的座標（回報事件或 [0] 鍵回正時使用的精準座標）
   const userLocationRef = useRef<{ lat: number; lng: number }>({
     lat: 24.7936,
     lng: 120.9917,
@@ -59,22 +65,23 @@ export default function HomePage() {
   // 記錄是否為第一次載入定位
   const hasInitializedCenterRef = useRef<boolean>(false);
 
-  // 2. 監聽 GPS 座標：僅更新大頭針，不干擾使用者手動平移的視角
+  // 2. 初始定位載入：僅在第一次取得座標時移動視角並放置圖釘，後續交由使用者手動校正
   useEffect(() => {
-    if (geoCoords) {
+    if (geoCoords && !hasInitializedCenterRef.current) {
       userLocationRef.current = geoCoords;
 
-      if (!hasInitializedCenterRef.current && !sessionStorage.getItem('map_last_lat')) {
+      if (!sessionStorage.getItem('map_last_lat')) {
         if (mapInstanceRef.current) {
           mapInstanceRef.current.panTo([geoCoords.lat, geoCoords.lng]);
         }
         setViewCenter(geoCoords);
-        hasInitializedCenterRef.current = true;
       }
 
       if (markerRef.current) {
         markerRef.current.setLatLng([geoCoords.lat, geoCoords.lng]);
       }
+      
+      hasInitializedCenterRef.current = true;
     }
   }, [geoCoords]);
 
@@ -193,13 +200,13 @@ export default function HomePage() {
   // 3. 從 /api/mapinfo 抓取資料並轉換格式
   const fetchAndProcessEvents = async (currentEvents: TrafficEvent[]) => {
     try {
-      // 呼叫後端 API（使用相對路徑，本地會自動轉向 http://localhost:3001/api/mapinfo）
+      // 呼叫後端 API
       const res = await fetch('/api/mapinfo');
       if (!res.ok) return;
 
       const apiData: ApiMapInfoItem[] = await res.json();
 
-      // 將後端回傳的 latitude, longtitude, title, description 轉換為 TrafficEvent
+      // 將後端回傳資料轉換為 TrafficEvent
       const mappedEvents: TrafficEvent[] = apiData.map((item, idx) => {
         const titleText = (item.title || '').trim();
         const eventText = (item.events || '').trim();
@@ -210,7 +217,6 @@ export default function HomePage() {
           eventType = 'traffic';
         }
 
-        // 以座標為依據產生識別 key，保留已計算過的 paths
         const uniqueKey = `event-${item.latitude.toFixed(5)}-${item.longtitude.toFixed(5)}-${idx}`;
         const existingEvent = currentEvents.find((e) => e.key === uniqueKey);
 
@@ -221,7 +227,7 @@ export default function HomePage() {
           event: eventType,
           description: `${item.title ? `【${item.title}】` : ''}${item.description || ''}`,
           radius: eventType === 'traffic' ? 30 : 35,
-          paths: existingEvent?.paths, // 若之前已經算好道路折線，沿用既有資料
+          paths: existingEvent?.paths, // 沿用既有的道路貼合路徑
         };
       });
 
@@ -291,10 +297,10 @@ export default function HomePage() {
           center: initialCenter,
           zoom: initialZoom,
           zoomControl: false,
-          dragging: false,
-          touchZoom: false,
-          doubleClickZoom: false,
-          scrollWheelZoom: false,
+          dragging: true, // 開放地圖拖曳
+          touchZoom: true,
+          doubleClickZoom: true,
+          scrollWheelZoom: true,
         });
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -304,10 +310,19 @@ export default function HomePage() {
 
         mapInstanceRef.current = map;
 
-        // 使用者位置大頭針
-        const marker = L.marker([userLocationRef.current.lat, userLocationRef.current.lng]).addTo(map);
-        marker.bindPopup('目前位置');
+        // 使用者位置大頭針：設為可手動拖曳
+        const marker = L.marker([userLocationRef.current.lat, userLocationRef.current.lng], {
+          draggable: true 
+        }).addTo(map);
+        marker.bindPopup('您的精確位置<br/>(可拖曳，或按 [7] 重新定於中心)');
         markerRef.current = marker;
+
+        // 監聽游標拖曳事件，將新座標回傳給 useGeolocation 並寫入 sessionStorage
+        marker.on('dragend', function (e: any) {
+          const position = e.target.getLatLng();
+          userLocationRef.current = { lat: position.lat, lng: position.lng };
+          updateLocation(position.lat, position.lng);
+        });
 
         drawLayers(events);
 
@@ -335,7 +350,7 @@ export default function HomePage() {
         mapInstanceRef.current = null;
       }
     };
-  }, []);
+  }, [updateLocation]);
 
   // 6. 按鍵控制支援（QVGA 螢幕相容）
   useEffect(() => {
@@ -378,7 +393,21 @@ export default function HomePage() {
         map.panBy([panDistance, 0], { animate: true });
       }
 
-      // [0] 鍵：主動手動回歸自身目前位置
+      // [7] 鍵：將大頭針設定在地圖目前的中心點，並寫回 sessionStorage 共用
+      if (e.key === '7') {
+        e.preventDefault();
+        const center = map.getCenter();
+        userLocationRef.current = { lat: center.lat, lng: center.lng };
+        
+        updateLocation(center.lat, center.lng);
+
+        if (markerRef.current) {
+          markerRef.current.setLatLng([center.lat, center.lng]);
+          markerRef.current.openPopup();
+        }
+      }
+
+      // [0] 鍵：主動手動回歸自身目前位置（校正後的精準位置）
       if (e.key === '0') {
         e.preventDefault();
         map.panTo([userLocationRef.current.lat, userLocationRef.current.lng], { animate: true });
@@ -387,7 +416,7 @@ export default function HomePage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [router]);
+  }, [router, updateLocation]);
 
   return (
     <main style={{ padding: '6px', textAlign: 'center', backgroundColor: '#ffffff', minHeight: '100vh' }}>
@@ -395,7 +424,7 @@ export default function HomePage() {
         suppressHydrationWarning
         style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px', color: '#000000' }}
       >
-        即時路況定位 (視角記憶與定時更新)
+        即時路況定位 (IP 輔助)
       </h2>
 
       <div>
@@ -415,7 +444,8 @@ export default function HomePage() {
 
         <div style={{ fontSize: '10px', color: '#374151', marginTop: '6px', lineHeight: '1.4' }}>
           <p><strong>[1/↑]</strong> 放大 | <strong>[3/↓]</strong> 縮小 (級別: {currentZoom})</p>
-          <p><strong>[2/4/5/6]</strong> 上左下右移 | <strong>[0]</strong> 回目前位置</p>
+          <p><strong>[2/4/5/6]</strong> 移動地圖 | <strong>[0]</strong> 找回圖釘</p>
+          <p style={{ color: '#047857' }}><strong>[7]</strong> 設目前畫面中心為我的位置</p>
           <p style={{ color: '#dc2626', marginTop: '2px' }}>
             <strong>[8]</strong> 列表 | <strong>[9]</strong> 回報
           </p>
@@ -424,8 +454,8 @@ export default function HomePage() {
         <div style={{ fontSize: '11px', marginTop: '4px', color: '#000000', lineHeight: '1.3' }}>
           <p>視角中心：{viewCenter.lat.toFixed(4)}, {viewCenter.lng.toFixed(4)}</p>
           <p style={{ color: '#4b5563', fontSize: '10px' }}>
-            自身位置：{userLocationRef.current.lat.toFixed(4)}, {userLocationRef.current.lng.toFixed(4)}
-            {geoLoading && <span style={{ color: '#2563eb' }}> (定位中...)</span>}
+            精確座標：{userLocationRef.current.lat.toFixed(4)}, {userLocationRef.current.lng.toFixed(4)}
+            {geoLoading && <span style={{ color: '#2563eb' }}> (抓取IP中...)</span>}
             {geoError && <span style={{ color: '#dc2626' }}> ({geoError})</span>}
           </p>
         </div>

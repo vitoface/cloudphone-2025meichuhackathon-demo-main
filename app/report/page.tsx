@@ -8,27 +8,62 @@ export default function ReportPage() {
   const [statusMessage, setStatusMessage] = useState('請按數字鍵回報狀況：');
   const [isReporting, setIsReporting] = useState(false);
 
-  // 處理回報的邏輯
+  // 處理真實 API 回報的邏輯 (按下按鈕當下才抓座標)
   const handleReport = (eventType: string) => {
     if (isReporting) return; // 避免重複送出
     setIsReporting(true);
-    setStatusMessage('定位中，請稍候...');
+    setStatusMessage('定位並傳送中，請稍候...');
 
     if ('geolocation' in navigator) {
+      // 1. 按下按鈕的瞬間，才開始抓取當下座標
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
           
-          // 在這裡，你們可以把資料打給後端 API
-          console.log(`[送出回報] 類型: ${eventType}, 緯度: ${lat}, 經度: ${lng}`);
-          
-          setStatusMessage(`回報成功！類型：${eventType}`);
-          
-          // 停留 2 秒後自動跳轉回首頁
-          setTimeout(() => {
-            router.push('/');
-          }, 2000);
+          try {
+            // 2. 抓到座標後，立刻打 API 送給後端
+            // 🔥 確認這裡是 /api/newMapinfo 還是 /api/mapinfo
+            const response = await fetch('/api/newMapinfo', { 
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                longtitude: lng, 
+                latitude: lat,
+                title: eventType,
+                description: '透過實體按鍵手機回報',
+              }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+              setStatusMessage(`回報成功！已記錄：${eventType}`);
+              
+              // 成功後停留 2 秒自動跳轉回地圖首頁
+              setTimeout(() => {
+                router.push('/');
+              }, 2000);
+            } else {
+              console.error('API 錯誤回應:', result);
+              setStatusMessage(`回報失敗: ${result.error || '伺服器錯誤'}`);
+              setIsReporting(false);
+              
+              setTimeout(() => {
+                 setStatusMessage('請按數字鍵回報狀況：');
+              }, 3000);
+            }
+          } catch (error) {
+            console.error('網路請求失敗:', error);
+            setStatusMessage('網路連線失敗，請稍後再試。');
+            setIsReporting(false);
+            
+            setTimeout(() => {
+               setStatusMessage('請按數字鍵回報狀況：');
+            }, 3000);
+          }
         },
         (error) => {
           console.error('定位失敗', error);
@@ -41,7 +76,7 @@ export default function ReportPage() {
         },
         {
            enableHighAccuracy: true,
-           timeout: 5000,
+           timeout: 10000, // 給 GPS 稍微多一點時間 (10秒)
            maximumAge: 0
         }
       );
@@ -55,6 +90,7 @@ export default function ReportPage() {
     router.push('/');
   };
 
+  // 監聽鍵盤按鍵
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (isReporting) return;
@@ -67,7 +103,7 @@ export default function ReportPage() {
           handleReport('施工');
           break;
         case '3':
-          handleReport('塞車');
+          handleReport('嚴重塞車');
           break;
         case '4':
           handleReport('不明危險');
@@ -98,7 +134,7 @@ export default function ReportPage() {
         {statusMessage}
       </div>
 
-      {/* 清單選項 (寬度鎖定 220px 配合地圖尺寸) */}
+      {/* 清單選項 */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
         
         <div style={{ width: '220px', padding: '6px 8px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', textAlign: 'left', display: 'flex', alignItems: 'center' }}>

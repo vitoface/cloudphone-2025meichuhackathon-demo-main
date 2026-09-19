@@ -454,22 +454,40 @@ export default function HomePage() {
   }, [router, updateLocation]);
 
   return (
-    <main style={{ padding: '6px', textAlign: 'center', backgroundColor: '#ffffff', minHeight: '100vh' }}>
-      <h2
-        suppressHydrationWarning
-        style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px', color: '#000000' }}
-      >
-        即時路況定位 (道路貼合)
-      </h2>
+    <main
+      style={{
+        width: '100%',
+        maxWidth: '240px',          // 限制最大寬度保護
+        height: '100vh',            // 滿版高度
+        maxHeight: '320px',         // 限制最大高度符合功能型手機
+        margin: '0 auto',
+        overflow: 'hidden',         // 隱藏整頁的捲動，避免雙層捲軸
+        boxSizing: 'border-box',
+        padding: '4px',             // 縮小 padding 留更多空間給地圖
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        backgroundColor: '#ffffff',
+        fontFamily: 'sans-serif',
+      }}
+    >
+      {/* 頂部標題區 (設定 flexShrink: 0 確保不會被地圖擠壓) */}
+      <div style={{ flexShrink: 0, textAlign: 'center', width: '100%' }}>
+        <h2
+          suppressHydrationWarning
+          style={{ fontSize: '13px', fontWeight: 'bold', margin: '2px 0 4px 0', color: '#000000' }}
+        >
+          即時路況定位 (道路貼合)
+        </h2>
+      </div>
 
-      {/* 🌟 建立 220px 寬度的置中容器，讓預警燈能夠正確對齊邊界 */}
-      <div style={{ position: 'relative', width: '220px', margin: '0 auto' }}>
-        
+      {/* 中間地圖容器 (設定 flex: 1 自動填滿剩餘高度) */}
+      <div style={{ position: 'relative', width: '100%', maxWidth: '220px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div
           ref={mapContainerRef}
           style={{
-            width: '100%', 
-            height: '140px',
+            width: '100%',
+            flex: 1,                // 🌟 關鍵：讓地圖自己延展高度
             borderRadius: '6px',
             border: '1px solid #d1d5db',
             position: 'relative',
@@ -477,9 +495,15 @@ export default function HomePage() {
             zIndex: 1,
           }}
         />
+        {/* 預警模組：依然放在相對定位的容器中，完美貼齊地圖左下角 */}
+        <ProximityAlert location={userLocationRef.current} reports={cloudReports} />
+      </div>
 
-        {/* 提示與圖例 */}
-        <div style={{ fontSize: '9px', color: '#374151', marginTop: '4px', lineHeight: '1.3' }}>
+      {/* 底部操作與資訊區 (設定 flexShrink: 0 固定在底部) */}
+      <div style={{ flexShrink: 0, width: '220px', textAlign: 'center', marginTop: '4px' }}>
+        
+        {/* 圖例 */}
+        <div style={{ fontSize: '9px', color: '#374151', lineHeight: '1.2' }}>
           <span style={{ color: '#b91c1c' }}>■ 塞車</span> | 
           <span style={{ color: '#000000' }}>■ 車禍</span> | 
           <span style={{ color: '#ea580c' }}>■ 施工</span> | 
@@ -487,30 +511,25 @@ export default function HomePage() {
           <span style={{ color: '#ca8a04' }}>● 危險</span>
         </div>
 
-        <div style={{ fontSize: '10px', color: '#374151', marginTop: '4px', lineHeight: '1.4' }}>
+        {/* 按鍵操作指引 */}
+        <div style={{ fontSize: '10px', color: '#374151', marginTop: '2px', lineHeight: '1.3' }}>
           <p><strong>[1/↑]</strong> 放大 | <strong>[3/↓]</strong> 縮小 (級別: {currentZoom})</p>
-          <p><strong>[2/4/5/6]</strong> 移動地圖 | <strong>[0]</strong> 找回圖釘</p>
-          <p style={{ color: '#047857' }}><strong>[7]</strong> 設目前畫面中心為我的位置</p>
+          <p><strong>[2/4/5/6]</strong> 移動 | <strong>[0]</strong> 找圖釘 | <strong>[7]</strong> 定位</p>
           <p style={{ color: '#dc2626', marginTop: '2px' }}>
             <strong>[8]</strong> 列表 | <strong>[9]</strong> 回報
           </p>
         </div>
 
-        <div style={{ fontSize: '11px', marginTop: '4px', color: '#000000', lineHeight: '1.3' }}>
-          <p>視角中心：{viewCenter.lat.toFixed(4)}, {viewCenter.lng.toFixed(4)}</p>
-          <p style={{ color: '#4b5563', fontSize: '10px' }}>
-            精確座標：{userLocationRef.current.lat.toFixed(4)}, {userLocationRef.current.lng.toFixed(4)}
-            {geoLoading && <span style={{ color: '#2563eb' }}> (抓取中...)</span>}
+        {/* 座標資訊 (稍微縮小字體以節省空間) */}
+        <div style={{ fontSize: '9px', marginTop: '2px', color: '#4b5563', lineHeight: '1.2' }}>
+          <p style={{ color: '#000' }}>中心：{viewCenter.lat.toFixed(4)}, {viewCenter.lng.toFixed(4)}</p>
+          <p>
+            精確：{userLocationRef.current.lat.toFixed(4)}, {userLocationRef.current.lng.toFixed(4)}
+            {geoLoading && <span style={{ color: '#2563eb' }}> (抓取中)</span>}
             {geoError && <span style={{ color: '#dc2626' }}> ({geoError})</span>}
           </p>
         </div>
 
-        {/* 🌟 預警模組放在此 220px 容器的最底層，配合 absolute 定位就能完美對齊左下角 */}
-        <ProximityAlert 
-          location={userLocationRef.current} 
-          reports={cloudReports} 
-        />
-        
       </div>
     </main>
   );

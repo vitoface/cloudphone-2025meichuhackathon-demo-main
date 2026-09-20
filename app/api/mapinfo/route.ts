@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/component/supabase";
 
 const NEARBY_RANGE_IN_DEGREES = 0.01;
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000;

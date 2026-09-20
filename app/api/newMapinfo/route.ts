@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
-import { scheduleGridDensityRefresh } from "@/lib/grid-density";
+import { supabase } from "@/component/supabase";
+import { scheduleGridDensityRefresh } from "@/component/grid-density";
 
 const MAP_EVENTS = [
   "car_crash",

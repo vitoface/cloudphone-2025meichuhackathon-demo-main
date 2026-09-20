@@ -7,4 +7,4 @@ create type public.map_event as enum (
 );
 
 alter table public."MapInfo"
-add column events public.map_event;;
+add column events public.map_event;

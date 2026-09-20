@@ -7,4 +7,4 @@ create table if not exists public."MapInfo" (
   description text
 );
 
-alter table public."MapInfo" enable row level security;;
+alter table public."MapInfo" enable row level security;

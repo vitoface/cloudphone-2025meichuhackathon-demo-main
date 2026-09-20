@@ -10,4 +10,4 @@ create table if not exists public."GridDensity" (
 alter table public."GridDensity" enable row level security;
 
 create index if not exists grid_density_even_num_idx
-on public."GridDensity" (even_num desc);;
+on public."GridDensity" (even_num desc);

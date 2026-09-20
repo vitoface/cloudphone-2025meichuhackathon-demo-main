@@ -43,19 +43,24 @@ export function useGeolocation(options: GeolocationOptions = {}) {
 
       // 2. 如果沒有記憶位置，才呼叫自建的後端 API 取得大致位置
       const response = await fetch('/api/location');
-      if (!response.ok) throw new Error('無法連接至 IP 定位服務');
+      if (!response.ok) throw new Error('Failed to connect to IP location service');
       
       const data = await response.json();
-      if (data.error) throw new Error(data.reason || 'IP 定位服務發生錯誤');
-      if (typeof data.latitude !== 'number' || typeof data.longitude !== 'number') {
-        throw new Error('無法解析 IP 位置資訊');
+      
+      // ip-api.com 發生錯誤時會回傳 status: 'fail' 與 message 欄位
+      if (data.status === 'fail') throw new Error(data.message || 'IP location service error occurred');
+      
+      // ip-api.com 經緯度欄位名稱為 lat 與 lon
+      if (typeof data.lat !== 'number' || typeof data.lon !== 'number') {
+        throw new Error('Failed to parse IP location data');
       }
 
-      if (data.country_code !== 'TW') {
-        throw new Error('偵測到海外代理 IP，請手動平移地圖設定位置');
+      // ip-api.com 國家代碼欄位名稱為 countryCode
+      if (data.countryCode !== 'TW') {
+        throw new Error('Overseas proxy IP detected, please pan the map manually to set your location');
       }
 
-      const coords = { lat: data.latitude, lng: data.longitude };
+      const coords = { lat: data.lat, lng: data.lon };
 
       // 將初次取得的 IP 位置也存入 sessionStorage 作為基準
       if (typeof window !== 'undefined') {
@@ -66,7 +71,7 @@ export function useGeolocation(options: GeolocationOptions = {}) {
       setLocation(coords);
       return coords;
     } catch (error: any) {
-      const msg = error.message || '發生未知錯誤';
+      const msg = error.message || 'An unknown error occurred';
       setErrorMsg(msg);
       throw error;
     } finally {

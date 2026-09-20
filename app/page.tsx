@@ -128,11 +128,11 @@ interface ApiMapInfoItem {
 }
 
 const EVENT_PENALTY: Record<EventType, number> = {
-  natural_disaster: 10000,
-  car_crash: 800,
-  roadwork: 300,
-  traffic_jam: 200,
-  unknown_danger: 150,
+  natural_disaster: 1000000,
+  car_crash: 800000,
+  roadwork: 300000,
+  traffic_jam: 200000,
+  unknown_danger: 150000,
 };
 
 export default function HomePage() {
@@ -228,6 +228,7 @@ export default function HomePage() {
     });
     navPolyline.addTo(navLayerGroupRef.current);
   };
+
   // 輔助函式 1：計算「點」到「線段」的最短距離（公尺），徹底解決兩拐點間距太遠漏判碰撞的問題
   const getDistanceToSegment = (
     pLat: number, pLng: number,
@@ -240,10 +241,10 @@ export default function HomePage() {
     const dx = (pLng - lng1) * Math.cos(((lat1 + pLat) / 2) * (Math.PI / 180));
     const dy = pLat - lat1;
     const lenSq = x * x + y * y;
-    let t = lenSq === 0 ? 0 : (dx * x + dy * y) / lenSq;
-    t = Math.max(0, Math.min(1, t));
-    const projLat = lat1 + t * (lat2 - lat1);
-    const projLng = lng1 + t * (lng2 - lng1);
+    let t_param = lenSq === 0 ? 0 : (dx * x + dy * y) / lenSq;
+    t_param = Math.max(0, Math.min(1, t_param));
+    const projLat = lat1 + t_param * (lat2 - lat1);
+    const projLng = lng1 + t_param * (lng2 - lng1);
     return getDistanceMetersFast(pLat, pLng, projLat, projLng);
   };
 
@@ -256,7 +257,7 @@ export default function HomePage() {
     let conflictedEvent: TrafficEvent | null = null;
 
     for (const ev of currentEvents) {
-      const hitRadius = (ev.radius || 30) + 15;
+      const hitRadius = (ev.radius || 30) + 40;
       for (let i = 0; i < routeCoords.length - 1; i++) {
         const dist = getDistanceToSegment(
           ev.lat, ev.lng,
@@ -266,108 +267,119 @@ export default function HomePage() {
         if (dist <= hitRadius) {
           penalty += EVENT_PENALTY[ev.eventType] || 1000;
           if (!conflictedEvent) conflictedEvent = ev;
-          break; // 該事件已觸發懲罰，換下一個事件檢查
+          break;
         }
       }
     }
     return { penalty, conflictedEvent };
   };
+
   const planSafeNavigation = async (
-  start: { lat: number; lng: number },
-  destination: { lat: number; lng: number },
-  currentEvents: TrafficEvent[]
-) => {
-  if (getDistanceMetersFast(start.lat, start.lng, destination.lat, destination.lng) < 10) {
-    setNavStatus(t.navArrived);
-    if (navLayerGroupRef.current) navLayerGroupRef.current.clearLayers();
-    return;
-  }
-
-  setNavStatus(t.navCalc);
-  try {
-    // 1. 向 OSRM 請求原始主路線與備選路徑
-    const baseUrl = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson&alternatives=3`;
-    const res = await fetch(baseUrl);
-    if (!res.ok) throw new Error('路由請求失敗');
-
-    const data = await res.json();
-    if (!data.routes || data.routes.length === 0) {
-      setNavStatus(t.navNoRoute);
+    start: { lat: number; lng: number },
+    destination: { lat: number; lng: number },
+    currentEvents: TrafficEvent[]
+  ) => {
+    if (getDistanceMetersFast(start.lat, start.lng, destination.lat, destination.lng) < 10) {
+      setNavStatus(t.navArrived);
+      if (navLayerGroupRef.current) navLayerGroupRef.current.clearLayers();
       return;
     }
 
-    const candidateRoutes: any[] = [...data.routes];
+    setNavStatus(t.navCalc);
+    try {
+      // 1. 向 OSRM 請求原始主路線與備選路徑
+      const baseUrl = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson&alternatives=3`;
+      const res = await fetch(baseUrl);
+      if (!res.ok) throw new Error('路由請求失敗');
 
-    // 2. 檢測第一條最佳路線是否撞上危險區域
-    const firstCoords: [number, number][] = candidateRoutes[0].geometry.coordinates.map(
-      (c: [number, number]) => [c[1], c[0]]
-    );
-    const { conflictedEvent } = checkRouteConflict(firstCoords, currentEvents);
-
-    // 3. 核心關鍵：若遇到危險且 OSRM 只給了 1 條穿過危險的路，動態產生「避讓中繼點」強迫繞道
-    if (conflictedEvent && candidateRoutes.length <= 1) {
-      const avoidDist = (conflictedEvent.radius || 35) + 80;
-      const dLat = avoidDist / 111000;
-      const dLng = avoidDist / (111000 * Math.cos(conflictedEvent.lat * (Math.PI / 180)));
-
-      // 產生往左側與往右側偏離的航點
-      const detourWaypoints = [
-        { lat: conflictedEvent.lat + dLat, lng: conflictedEvent.lng - dLng },
-        { lat: conflictedEvent.lat - dLat, lng: conflictedEvent.lng + dLng },
-      ];
-
-      for (const wp of detourWaypoints) {
-        try {
-          const wpUrl = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${wp.lng},${wp.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`;
-          const wpRes = await fetch(wpUrl);
-          if (wpRes.ok) {
-            const wpData = await wpRes.json();
-            if (wpData.routes && wpData.routes.length > 0) {
-              candidateRoutes.push(wpData.routes[0]);
-            }
-          }
-        } catch {
-          // 單一繞道點請求失敗時略過
-        }
+      const data = await res.json();
+      if (!data.routes || data.routes.length === 0) {
+        setNavStatus(t.navNoRoute);
+        return;
       }
-    }
 
-    // 4. 計算所有候選路線（包含產生的繞道路線）的懲罰分數
-    let bestRoute = candidateRoutes[0];
-    let lowestScore = Infinity;
-    let isSafe = false;
+      const candidateRoutes: any[] = [...data.routes];
 
-    candidateRoutes.forEach((route: any) => {
-      const routeCoords: [number, number][] = route.geometry.coordinates.map(
+      // 2. 檢驗是否所有預設路線都遭到危險阻礙
+      const allInitialHaveConflict = candidateRoutes.every((route) => {
+        const coords: [number, number][] = route.geometry.coordinates.map(
+          (c: [number, number]) => [c[1], c[0]]
+        );
+        return checkRouteConflict(coords, currentEvents).conflictedEvent !== null;
+      });
+
+      const firstCoords: [number, number][] = candidateRoutes[0].geometry.coordinates.map(
+        (c: [number, number]) => [c[1], c[0]]
+      );
+      const { conflictedEvent } = checkRouteConflict(firstCoords, currentEvents);
+
+      // 🌟【突破限制】：只要首選受阻且備選全部受阻，強制四向擴大產生中繼點繞道
+      if (conflictedEvent && allInitialHaveConflict) {
+        const avoidDist = (conflictedEvent.radius || 35) + 220; // 放大至 220 公尺跳出街道吸附範圍
+        const dLat = avoidDist / 111000;
+        const dLng = avoidDist / (111000 * Math.cos(conflictedEvent.lat * (Math.PI / 180)));
+
+        const detourWaypoints = [
+          { lat: conflictedEvent.lat + dLat, lng: conflictedEvent.lng },
+          { lat: conflictedEvent.lat - dLat, lng: conflictedEvent.lng },
+          { lat: conflictedEvent.lat, lng: conflictedEvent.lng + dLng },
+          { lat: conflictedEvent.lat, lng: conflictedEvent.lng - dLng },
+        ];
+
+        await Promise.all(
+          detourWaypoints.map(async (wp) => {
+            try {
+              const wpUrl = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${wp.lng},${wp.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`;
+              const wpRes = await fetch(wpUrl);
+              if (wpRes.ok) {
+                const wpData = await wpRes.json();
+                if (wpData.routes && wpData.routes.length > 0) {
+                  candidateRoutes.push(wpData.routes[0]);
+                }
+              }
+            } catch {
+              // 忽略單一航點錯誤
+            }
+          })
+        );
+      }
+
+      // 3. 評估所有候選路線（包含繞道點產生的路線）
+      let bestRoute = candidateRoutes[0];
+      let lowestScore = Infinity;
+      let isSafe = false;
+
+      candidateRoutes.forEach((route: any) => {
+        const routeCoords: [number, number][] = route.geometry.coordinates.map(
+          (c: [number, number]) => [c[1], c[0]]
+        );
+
+        const { penalty } = checkRouteConflict(routeCoords, currentEvents);
+        const totalScore = route.duration + penalty;
+
+        if (totalScore < lowestScore) {
+          lowestScore = totalScore;
+          bestRoute = route;
+          isSafe = penalty === 0;
+        }
+      });
+
+      // 4. 繪製最安全路徑
+      const bestPath: [number, number][] = bestRoute.geometry.coordinates.map(
         (c: [number, number]) => [c[1], c[0]]
       );
 
-      const { penalty } = checkRouteConflict(routeCoords, currentEvents);
-      const totalScore = route.duration + penalty;
+      drawNavRoute(bestPath);
 
-      if (totalScore < lowestScore) {
-        lowestScore = totalScore;
-        bestRoute = route;
-        isSafe = penalty === 0;
-      }
-    });
-
-    // 5. 繪製得分最高（最安全）的路徑
-    const bestPath: [number, number][] = bestRoute.geometry.coordinates.map(
-      (c: [number, number]) => [c[1], c[0]]
-    );
-
-    drawNavRoute(bestPath);
-
-    const distanceKm = (bestRoute.distance / 1000).toFixed(1);
-    const minutes = Math.ceil(bestRoute.duration / 60);
-    setNavStatus(
-      `${t.navActive}: ${distanceKm}km (${minutes}${t.mins}${isSafe ? `，${t.navSafe}` : ''})`
-    );
-  } catch {
-    setNavStatus(t.navFailed);
-  }
-};
+      const distanceKm = (bestRoute.distance / 1000).toFixed(1);
+      const minutes = Math.ceil(bestRoute.duration / 60);
+      setNavStatus(
+        `${t.navActive}: ${distanceKm}km (${minutes}${t.mins}${isSafe ? `，${t.navSafe}` : ' (⚠️含阻礙)'})`
+      );
+    } catch {
+      setNavStatus(t.navFailed);
+    }
+  };
 
   useEffect(() => {
     if (geoCoords && !hasInitializedCenterRef.current) {
@@ -503,7 +515,6 @@ export default function HomePage() {
     });
   };
 
-  // 🌟【關鍵修復 1】：當 events 資料就緒且地圖與 Leaflet 已載入時，立即自動重繪
   useEffect(() => {
     if (events.length > 0 && mapInstanceRef.current && leafletRef.current) {
       drawLayers(events);
@@ -658,17 +669,11 @@ export default function HomePage() {
     const handleOnline = () => {
       syncOfflineReports();
     };
-    const handleOffline = () => {
-      
-    };
 
     window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
     return () => {
       clearInterval(interval);
       window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
     };
   }, []);
 
@@ -739,10 +744,7 @@ export default function HomePage() {
           }
         });
 
-        // 繪製已有事件
         drawLayers(eventsRef.current);
-
-        // 🌟【關鍵修復 2】：地圖實例掛載完成後，立即主動向 API 觸發一次更新，消弭時序脫節
         fetchAndProcessEvents(eventsRef.current);
 
         let moveTimeout: any;
@@ -805,10 +807,10 @@ export default function HomePage() {
 
       const panDistance = 30;
 
-      if (e.key === 'ArrowUp' || e.key === '1') {
+      if (e.key === '1') {
         e.preventDefault();
         map.zoomIn();
-      } else if (e.key === 'ArrowDown' || e.key === '3') {
+      } else if (e.key === '3') {
         e.preventDefault();
         map.zoomOut();
       }
@@ -906,7 +908,7 @@ export default function HomePage() {
           {t.title}
         </h2>
 
-        {(pendingSyncCount > 0) && (
+        {pendingSyncCount > 0 && (
           <div
             style={{
               fontSize: '9px',
@@ -916,7 +918,7 @@ export default function HomePage() {
               borderRadius: '3px',
               fontWeight: 'bold',
               marginBottom: '2px',
-              border: `1px solid ${'#fca5a5'}`
+              border: '1px solid #fca5a5'
             }}
           >
             {`🔄 連線恢復：自動同步中 (${pendingSyncCount})`}

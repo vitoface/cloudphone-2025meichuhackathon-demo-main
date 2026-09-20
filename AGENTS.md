@@ -21,7 +21,7 @@ Removing this block from a diff will only cause the uncommitted change to be rec
 
 <!-- END:nextjs-agent-rules -->
 
-# AGENTS.md
+## AGENTS.md
 
 ## Project Overview
 

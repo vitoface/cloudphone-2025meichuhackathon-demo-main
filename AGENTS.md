@@ -25,7 +25,7 @@ Removing this block from a diff will only cause the uncommitted change to be rec
 
 ## Project Overview
 
-This project is a hackathon web application built with:
+This project is the hackathon web application built with:
 
 - Next.js
 - React

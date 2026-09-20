@@ -815,7 +815,7 @@ export default function HomePage() {
         map.zoomOut();
       }
 
-      if (e.key === '2') {
+      /*if (e.key === '2') {
         e.preventDefault();
         map.panBy([0, -panDistance], { animate: true });
       } else if (e.key === '5') {
@@ -827,7 +827,7 @@ export default function HomePage() {
       } else if (e.key === '6') {
         e.preventDefault();
         map.panBy([panDistance, 0], { animate: true });
-      }
+      } */
 
       if (e.key === '7') {
         e.preventDefault();
@@ -982,8 +982,9 @@ export default function HomePage() {
           <span style={{ color: '#ca8a04' }}>● {t.evtDanger}</span>
         </div>
 
+        {/* 🟢 修改後的寫法 */}
         <div style={{ fontSize: '9.5px', color: '#374151', marginTop: '2px', lineHeight: '1.3' }}>
-          <p><strong>[2/4/5/6]</strong> {t.move} | <strong>[1/3]</strong> {t.zoom} | <strong>[0]</strong> {t.backStart}</p>
+          <p><strong>[↑↓←→]</strong> {t.move} | <strong>[1/3]</strong> {t.zoom} | <strong>[0]</strong> {t.backStart}</p>
           <p style={{ color: '#16a34a' }}><strong>[*]</strong> {t.setDest}</p>
           <p style={{ color: '#dc2626', marginTop: '1px' }}>
             <strong>[7]</strong> {t.locate} | <strong>[8]</strong> {t.list} | <strong>[9]</strong> {t.report} | <strong>[#]</strong> {t.analysis}

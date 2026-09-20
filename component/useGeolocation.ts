@@ -41,14 +41,18 @@ export function useGeolocation(options: GeolocationOptions = {}) {
         }
       }
 
-      // 2. 如果沒有記憶位置，才呼叫 IP API 取得大致位置
-      const response = await fetch('https://ipapi.co/json/');
+      // 2. 如果沒有記憶位置，才呼叫自建的後端 API 取得大致位置
+      const response = await fetch('/api/location');
       if (!response.ok) throw new Error('無法連接至 IP 定位服務');
       
       const data = await response.json();
       if (data.error) throw new Error(data.reason || 'IP 定位服務發生錯誤');
       if (typeof data.latitude !== 'number' || typeof data.longitude !== 'number') {
         throw new Error('無法解析 IP 位置資訊');
+      }
+
+      if (data.country_code !== 'TW') {
+        throw new Error('偵測到海外代理 IP，請手動平移地圖設定位置');
       }
 
       const coords = { lat: data.latitude, lng: data.longitude };

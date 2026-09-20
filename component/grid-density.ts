@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/component/supabase";
 
 const GRID_SIZE_IN_DEGREES = 0.01;
 const MINIMUM_EVENTS_PER_GRID = 3;
